@@ -272,3 +272,22 @@ core/model               truly shared domain models
 
 A feature may depend on core. Core must not depend on features. Sibling
 features do not reach into each other's implementation packages.
+
+
+### Implemented Android video-transfer execution
+
+The Phase 6 implementation uses two execution paths:
+
+```text
+API 34+
+  -> JobScheduler user-initiated data transfer job
+
+API <= 33
+  -> foreground WorkManager dataSync transfer
+```
+
+Both paths call the same `VideoUploadRepository`. Transfer state remains in Room rather than in Activity/Compose state.
+
+The repository owns create/recover/transfer/finalize behavior. The scheduler owns only execution lifecycle.
+
+A remote READY result is durable and does not mutate `episodes`. Episode attachment remains a Phase 7 responsibility.

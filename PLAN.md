@@ -599,59 +599,113 @@ No R2 credential is required for this phase.
 
 ---
 
-## Phase 6 — Secure R2 Upload Contract
+## Phase 6 — Secure R2 Upload Contract 🟡 CODE / CI PASS · PRODUCTION SMOKE PENDING
 
-### Scope
+The trusted server upload boundary and Android transfer pipeline are implemented end-to-end without embedding permanent R2 credentials in the APK.
 
-Implement the trusted server boundary required by direct binary upload.
+### Server implementation
 
-### Server responsibilities
+- [x] additive `video_assets` and `video_upload_sessions` schema;
+- [x] admin-only RLS;
+- [x] canonical server-generated asset/session IDs and object keys;
+- [x] bearer Supabase admin authentication for Android API routes;
+- [x] server-only R2 account credentials;
+- [x] server-configured size limit, single-upload threshold, part size, URL TTL, and session TTL;
+- [x] single presigned PUT path;
+- [x] multipart initiation, per-part authorization, completion, and abort;
+- [x] server-side HEAD verification before READY;
+- [x] invalid uploaded object fails instead of becoming READY;
+- [x] recovery/status endpoint;
+- [x] explicit cancel endpoint;
+- [x] upload completion never mutates or publishes an episode;
+- [x] backend CI `36318207100` passed typecheck, lint, and tests.
 
-- authenticate Supabase user/session;
-- verify admin authorization;
-- generate canonical `assetId` and R2 object key;
-- validate allowed MIME/type/size metadata;
-- return short-lived, scoped upload authorization;
-- initiate multipart upload when required;
-- finalize multipart upload when required;
-- verify uploaded object server-side;
-- persist/transition media asset status;
-- expose safe finalize/cancel endpoints;
-- reject expired/invalid sessions;
-- never return permanent R2 credentials.
+### Android implementation
 
-### Android responsibilities
+- [x] authenticated Ceritaria upload API client using current Supabase access token;
+- [x] direct byte transfer to short-lived presigned R2 URLs;
+- [x] source range streaming without loading a whole video into memory;
+- [x] single PUT upload;
+- [x] multipart upload with persisted completed-part ETags;
+- [x] resumable missing-part retry;
+- [x] remote status recovery for expired/terminal/READY sessions;
+- [x] Room upload-session and multipart state ownership;
+- [x] persisted uploaded bytes and total bytes;
+- [x] server finalize -> VERIFYING -> READY flow;
+- [x] API 34+ User-Initiated Data Transfer Job scheduling;
+- [x] pre-API-34 foreground WorkManager fallback with dataSync service type;
+- [x] notification/progress updates;
+- [x] explicit upload cancel;
+- [x] Episode editor Upload / Retry / Cancel controls;
+- [x] READY remote asset shown in editor;
+- [x] encoded temporary output removed only after remote asset becomes READY;
+- [x] Android CI `36318085202` passed the final Phase 6 code state.
 
-- request upload session;
-- transfer prepared file;
-- persist resume metadata locally when required;
-- report bytes uploaded / total bytes;
-- retry recoverable part failures;
-- cancel explicitly;
-- call server finalization;
-- transition local state to VERIFYING/READY/FAILED;
-- never perform privileged signing locally.
-
-### Upload strategy
-
-Support two paths where the verified server contract allows it:
+### Runtime flow
 
 ```text
-small object
-  -> single authorized PUT
-
-large video
-  -> multipart upload
-  -> resumable/retryable parts
-  -> complete
-  -> server verification
+prepared local video
+  -> schedule transfer
+  -> request server upload session
+  -> SINGLE PUT
+     or
+     MULTIPART missing-part transfer
+  -> complete multipart when required
+  -> server HEAD verification
+  -> local VERIFYING
+  -> remote asset READY
+  -> local upload state READY
 ```
 
-The exact size threshold is a server/config decision rather than a magic constant spread through Android UI code.
+### Recovery contract
 
-### Exit gate
+A retry does not automatically force re-encoding.
 
-A prepared local video can be uploaded, resumed/retried as supported, verified by the server, and represented as a READY media asset without embedding permanent R2 credentials in Android.
+For multipart uploads, completed part ETags remain in Room and only missing parts are transferred again.
+
+If the remote session is expired, terminal, or unusable, Android abandons the local session metadata and requests a fresh server session.
+
+If the remote asset is already READY, Android adopts that READY state rather than re-uploading.
+
+### Execution strategy
+
+- Android 14 / API 34 and newer: user-initiated transfer uses `JobScheduler.setUserInitiated(true)`.
+- Older supported Android versions: foreground WorkManager performs the transfer under a network constraint.
+- Transfer progress is durable in Room; UI navigation is not the owner of the upload lifecycle.
+
+### Security boundary
+
+Android never stores or receives permanent R2 credentials. It receives only scoped, short-lived operation URLs from the trusted Ceritaria server.
+
+The server owns:
+
+- admin authorization;
+- R2 request signing;
+- canonical object keys;
+- upload policy;
+- object verification;
+- final READY transition.
+
+### Production gate still pending
+
+Code/build gate: **PASS**.
+
+Production completion requires applying/configuring the real infrastructure and running smoke tests:
+
+1. apply Phase 6 Supabase migrations;
+2. configure all R2 server variables and the production bucket;
+3. verify unauthorized/non-admin requests are rejected;
+4. run one SINGLE upload below the configured threshold;
+5. run one MULTIPART upload above the threshold;
+6. interrupt multipart transfer and verify missing-part resume;
+7. cancel an active upload;
+8. verify expired-session recovery;
+9. verify object mismatch never reaches READY;
+10. verify API 34+ UIDT and one pre-34 fallback device;
+11. confirm no R2 access key/secret exists in the APK;
+12. confirm the episode's current YouTube/Facebook video remains unchanged after upload READY.
+
+A READY asset is intentionally **not attached to the episode in Phase 6**. That atomic production-video replacement belongs to Phase 7.
 
 ---
 
