@@ -313,14 +313,15 @@ Additional limits:
 -   Prefer hardware MediaCodec paths supported by the device.
 -   Do not bundle FFmpeg as the default encoder without explicit
     architectural approval.
--   Never perform video encode on the main thread.
+-   Never perform blocking/manual codec or file-transcoding work on the main thread.
+-   Media3 Transformer lifecycle/control calls must stay on one application looper as required by Media3; heavy codec work remains Media3-owned.
 -   Never force-stretch source video to 1080×1920.
 -   Respect source rotation/aspect ratio.
 -   Skip lossy re-encode when compatibility checker approves the source.
 -   A retryable upload failure must reuse the encoded file.
 -   Cancellation must release codec/transformer resources.
 -   Check available storage where practical before encoding.
--   Clean stale temporary media with an explicit retention policy.
+-   Temporary-media cleanup must be lifecycle-owned. READY encoded output is retained for upload/retry and must not be deleted by blind age-only cleanup.
 -   Do not delete the previous production video until replacement is
     READY and committed.
 -   Do not mark an episode Published merely because upload completed;

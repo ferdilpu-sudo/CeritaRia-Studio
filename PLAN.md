@@ -542,47 +542,58 @@ Before Phase 4 receives a final green completion marker, an authorized admin mus
 
 ---
 
-## Phase 5 — Local Video Pipeline
+## Phase 5 — Local Video Pipeline 🟡 IMPLEMENTED / REAL-DEVICE SMOKE PENDING
+
+The local preparation pipeline is implemented with Media3 1.11.1 and Room 2.8.5 and does not depend on the R2 server contract.
 
 ### Scope
 
 Build video inspection and encoding without depending on a finished R2 production contract.
 
-### Tasks
+### Implementation status
 
-- local video selection;
-- persist required URI permission/access;
-- inspect duration, dimensions, rotation, FPS, codec, audio, and file size;
-- create `VideoCompatibilityChecker`;
-- define verified streaming preset;
-- skip re-encode for compatible source;
-- implement Media3 Transformer encoder;
-- preserve aspect ratio and rotation;
-- cap output according to verified streaming requirements;
-- expose progress;
-- support cancellation;
-- detect unsupported codec;
-- detect insufficient local storage where estimable;
-- create temporary-media retention policy;
-- persist `VideoJob` in Room;
-- restore job UI after process recreation;
-- reuse valid encoded output after recoverable upload failure.
+- [x] system video picker and persisted source URI access;
+- [x] Media3 Inspector metadata retrieval for duration, dimensions, rotation, FPS, codecs, audio metadata, and size;
+- [x] source fingerprint + durable `VideoJob` in Room;
+- [x] pure compatibility checker and streaming preset;
+- [x] compatible MP4/H.264/AAC source skips lossy re-encode;
+- [x] orientation-independent max short side 1080 / long side 1920;
+- [x] landscape 1920×1080 and portrait 1080×1920 accepted unchanged;
+- [x] oversized input downscaled without stretch;
+- [x] Media3 Transformer H.264/AAC encoder with AAC 128 kbps target;
+- [x] 30 fps cap, progress, cancellation, partial-output cleanup;
+- [x] insufficient-storage guard;
+- [x] unsupported codec distinguished from generic export failure;
+- [x] encoded output stored in app-owned no-backup storage;
+- [x] READY encoded output retained for future upload/retry with no blind age-only cleanup;
+- [x] interrupted ENCODING state and missing READY output recover to QUEUED;
+- [x] active live ENCODING state is not mistaken for stale process-death state;
+- [x] Episode editor local-video UI with source metadata, prepare/progress/cancel/error states;
+- [x] existing YouTube/Facebook editing remains separate;
+- [x] new episode must have a stable ID before local video job creation;
+- [ ] representative real-device MediaCodec smoke test.
+
+### Local state flow
+
+```text
+Selected
+  -> Inspecting
+  -> READY_WITHOUT_ENCODING
+     or
+  -> READY_TO_ENCODE
+  -> ENCODING
+  -> ENCODED_READY
+```
+
+Encoding and upload remain separate. `ENCODED_READY` means only that a valid local file is available for Phase 6.
+
+### Recovery and retention
+
+Room is the durable operational source of truth. Process death while encoding resets the stale job to `QUEUED` and removes partial output. READY encoded output is retained until an explicit later lifecycle owner removes it after replacement/discard or successful upload/finalization.
 
 ### Exit gate
 
-A selected local video can reliably reach either:
-
-```text
-READY_WITHOUT_ENCODING
-```
-
-or:
-
-```text
-ENCODED_READY
-```
-
-and that state survives normal navigation/process recreation where supported by the execution contract.
+Code/build gate: **PASS after final Phase 5 CI**. Real-device behavior gate: **PENDING**.
 
 No R2 credential is required for this phase.
 

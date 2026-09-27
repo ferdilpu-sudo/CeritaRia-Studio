@@ -74,6 +74,7 @@ Background execution is job-type specific rather than one generic Worker archite
 
 - Image transfer and short durable work may use WorkManager.
 - Video encoding has its own execution adapter around Media3 and must expose cancellation/progress without UI ownership.
+- Transformer lifecycle/control calls remain on one Media3 application looper; codec work stays inside Media3 rather than custom blocking UI-thread work.
 - Large user-initiated video transfer uses the execution mechanism appropriate to the supported Android version and verified transfer contract.
 - Execution adapters call domain/data abstractions and never contain Compose/UI logic.
 - Durable media state is persisted in Room so execution can be reconstructed after process recreation.
@@ -194,7 +195,9 @@ Never ship R2 account secret/access key in Android.
 - `VideoJobRepository` is the source of truth for operational encode/upload state.
 - ViewModels observe durable state; they do not own the only copy of progress/retry metadata.
 - Encoded output is retained after recoverable upload failure so retry does not force re-encoding.
-- Temporary media cleanup follows an explicit retention policy and never deletes the active production asset.
+- READY encoded output has no blind age-only eviction; deletion belongs to explicit replace/discard/finalization lifecycle ownership.
+- Partial output is removed on failed, cancelled, or interrupted preparation recovery.
+- Temporary media cleanup never deletes the active production asset.
 - Process recreation must reconstruct UI state from persisted job state rather than assuming the old in-memory worker/controller still exists.
 
 ## 11. Error taxonomy
