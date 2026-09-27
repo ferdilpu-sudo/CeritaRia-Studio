@@ -151,4 +151,8 @@
     <string name="cancel_encoding">Batalkan encoding</string>
     <string name="source_video">Source</string>
     <string name="studio_video_output">Studio output: MP4 · H.264 · max 1080×1920 · ≤30 fps · AAC</string>
+    <string name="video_upload_notification_channel">Upload video</string>
+    <string name="video_upload_notification_title">Mengunggah video Ceritaria</string>
+    <string name="video_upload_notification_starting">Menyiapkan transfer…</string>
+    <string name="video_upload_notification_progress">Upload %1$d%%</string>
 </resources>
