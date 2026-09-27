@@ -9,8 +9,8 @@ import javax.inject.Inject
 
 class SupabaseSeriesDataSource @Inject constructor(
     private val clientProvider: SupabaseClientProvider,
-) {
-    suspend fun fetchSeries(query: SeriesQuery): List<SeriesRowDto> {
+) : SeriesDataSource {
+    override suspend fun fetchSeries(query: SeriesQuery): List<SeriesRowDto> {
         val client = requireNotNull(clientProvider.clientOrNull) { "Supabase is not configured." }
         val start = query.page.toLong() * query.pageSize
         val end = start + query.pageSize
@@ -32,7 +32,7 @@ class SupabaseSeriesDataSource @Inject constructor(
         }.decodeList<SeriesRowDto>()
     }
 
-    suspend fun fetchSeriesById(id: String): SeriesRowDto? {
+    override suspend fun fetchSeriesById(id: String): SeriesRowDto? {
         val client = requireNotNull(clientProvider.clientOrNull) { "Supabase is not configured." }
         return client.from("series").select {
             filter {

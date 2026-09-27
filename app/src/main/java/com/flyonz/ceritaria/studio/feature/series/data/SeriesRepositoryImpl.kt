@@ -12,7 +12,7 @@ import javax.inject.Singleton
 
 @Singleton
 class SeriesRepositoryImpl @Inject constructor(
-    private val dataSource: SupabaseSeriesDataSource,
+    private val dataSource: SeriesDataSource,
 ) : SeriesRepository {
     override suspend fun getSeries(query: SeriesQuery): AppResult<PagedResult<Series>> =
         runRead {

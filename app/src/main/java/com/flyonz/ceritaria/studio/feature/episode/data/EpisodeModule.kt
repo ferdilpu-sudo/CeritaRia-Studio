@@ -12,5 +12,11 @@ import javax.inject.Singleton
 abstract class EpisodeModule {
     @Binds
     @Singleton
+    abstract fun bindEpisodeDataSource(
+        implementation: SupabaseEpisodeDataSource,
+    ): EpisodeDataSource
+
+    @Binds
+    @Singleton
     abstract fun bindEpisodeRepository(implementation: EpisodeRepositoryImpl): EpisodeRepository
 }

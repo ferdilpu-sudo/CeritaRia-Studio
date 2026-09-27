@@ -12,5 +12,11 @@ import javax.inject.Singleton
 abstract class SeriesModule {
     @Binds
     @Singleton
+    abstract fun bindSeriesDataSource(
+        implementation: SupabaseSeriesDataSource,
+    ): SeriesDataSource
+
+    @Binds
+    @Singleton
     abstract fun bindSeriesRepository(implementation: SeriesRepositoryImpl): SeriesRepository
 }

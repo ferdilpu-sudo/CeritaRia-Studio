@@ -12,7 +12,7 @@ import kotlinx.coroutines.CancellationException
 
 @Singleton
 class EpisodeRepositoryImpl @Inject constructor(
-    private val dataSource: SupabaseEpisodeDataSource,
+    private val dataSource: EpisodeDataSource,
 ) : EpisodeRepository {
     override suspend fun getEpisodes(query: EpisodeQuery): AppResult<PagedResult<Episode>> =
         runRead {
