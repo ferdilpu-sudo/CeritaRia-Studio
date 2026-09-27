@@ -20,6 +20,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.flyonz.ceritaria.studio.feature.home.HomeScreen
 import com.flyonz.ceritaria.studio.feature.placeholder.PlaceholderScreen
+import com.flyonz.ceritaria.studio.feature.series.detail.SeriesDetailScreen
+import com.flyonz.ceritaria.studio.feature.series.list.SeriesListScreen
+
+private const val SERIES_DETAIL_ROUTE = "series/{seriesId}"
 
 @Composable
 fun StudioShell(
@@ -29,23 +33,26 @@ fun StudioShell(
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
+    val showBottomBar = StudioDestination.topLevel.any { it.route == currentRoute }
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                StudioDestination.topLevel.forEach { destination ->
-                    NavigationBarItem(
-                        selected = currentRoute == destination.route,
-                        onClick = {
-                            navController.navigate(destination.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { DestinationIcon(destination) },
-                        label = { Text(stringResource(destination.labelRes)) },
-                    )
+            if (showBottomBar) {
+                NavigationBar {
+                    StudioDestination.topLevel.forEach { destination ->
+                        NavigationBarItem(
+                            selected = currentRoute == destination.route,
+                            onClick = {
+                                navController.navigate(destination.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            icon = { DestinationIcon(destination) },
+                            label = { Text(stringResource(destination.labelRes)) },
+                        )
+                    }
                 }
             }
         },
@@ -58,7 +65,13 @@ fun StudioShell(
                 HomeScreen(contentPadding = padding, userEmail = userEmail, onSignOut = onSignOut)
             }
             composable(StudioDestination.Series.route) {
-                PlaceholderScreen(contentPadding = padding, titleRes = StudioDestination.Series.labelRes)
+                SeriesListScreen(
+                    contentPadding = padding,
+                    onSeriesClick = { id -> navController.navigate("series/$id") },
+                )
+            }
+            composable(SERIES_DETAIL_ROUTE) {
+                SeriesDetailScreen(contentPadding = padding, onBack = navController::popBackStack)
             }
             composable(StudioDestination.Episodes.route) {
                 PlaceholderScreen(contentPadding = padding, titleRes = StudioDestination.Episodes.labelRes)
