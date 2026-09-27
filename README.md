@@ -5,7 +5,7 @@ Native Android administration app for Ceritaria.
 ## Phase status
 
 - Phase 0: Production Contract Audit ✅
-- Phase 1: Android Foundation 🟡 implementation + CI complete; production auth smoke test pending configuration
+- Phase 1: Android Foundation 🟡 implementation + CI complete; production auth smoke test pending configuration\n- Phase 2: Read-only Catalog 🟡 implementation + CI complete; production catalog smoke test pending configuration
 
 ## Toolchain
 

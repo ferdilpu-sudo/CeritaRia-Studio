@@ -391,29 +391,47 @@ An authorized admin must still be smoke-tested against the real Supabase project
 
 ---
 
-## Phase 2 — Read-only Catalog
+## Phase 2 — Read-only Catalog 🟡 IMPLEMENTED / PRODUCTION SMOKE PENDING
+
+Implementation is committed and CI verified. GitHub Actions run `36297938559` passed `lintDebug`, `testDebugUnitTest`, and `assembleDebug`.
+
+The remaining exit-gate item is an end-to-end read-only smoke test against the real Ceritaria Supabase project after the public client configuration is supplied securely. No production catalog credentials are committed to this public repository.
 
 ### Scope
 
 Prove data compatibility before enabling mutations.
 
-### Tasks
+### Implementation status
 
-- series list;
-- pagination;
-- search/filter;
-- series detail;
-- episode list per series;
-- episode detail;
-- provider/status labels;
-- draft/published/deleted indicators;
-- pull-to-refresh;
-- loading/content/empty/error states;
-- safe handling for unknown future provider values.
+- [x] series list from the verified production schema;
+- [x] backend range pagination with one-row lookahead;
+- [x] debounced series search;
+- [x] published/draft/featured series filters;
+- [x] series detail;
+- [x] episode list;
+- [x] episode list filtered by parent series;
+- [x] backend episode pagination;
+- [x] debounced episode search;
+- [x] episode status/provider/series filters;
+- [x] episode detail;
+- [x] YouTube/Facebook provider labels;
+- [x] unknown future provider values preserved safely;
+- [x] draft/published/unpublished/deleted state mapping;
+- [x] pull-to-refresh;
+- [x] loading/content/empty/error states;
+- [x] cover and thumbnail network artwork with fallback;
+- [x] DTO -> mapper -> domain boundaries;
+- [x] repository data-source interfaces for testability;
+- [x] mapper/provider/publish-state/repository/ViewModel unit tests;
+- [x] changed handwritten files remain within responsibility/line-count limits;
+- [x] `lintDebug`, `testDebugUnitTest`, and `assembleDebug` pass in CI;
+- [ ] production Supabase catalog/RLS smoke test with configured public client values.
 
 ### Exit gate
 
-Studio can inspect the real production catalog without mutations and without requiring every record to be loaded into memory.
+Code/build gate: **PASS**. Production integration smoke gate: **PENDING CONFIGURATION**.
+
+Before Phase 2 receives a final green completion marker, an authorized admin must verify against the real production backend that series and episode lists, pagination, search/filter behavior, Series -> Episodes navigation, detail data, RLS access, and artwork URLs match the existing Ceritaria catalog without mutation.
 
 ---
 
