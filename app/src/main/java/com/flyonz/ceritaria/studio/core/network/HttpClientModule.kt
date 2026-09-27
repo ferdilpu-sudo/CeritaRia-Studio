@@ -34,4 +34,16 @@ object HttpClientModule {
             )
         }
     }
+
+    @Provides
+    @Singleton
+    @R2UploadHttpClient
+    fun provideR2UploadHttpClient(): HttpClient = HttpClient(Android) {
+        expectSuccess = false
+        install(HttpTimeout) {
+            requestTimeoutMillis = 30L * 60L * 1000L
+            connectTimeoutMillis = 30_000
+            socketTimeoutMillis = 5L * 60L * 1000L
+        }
+    }
 }

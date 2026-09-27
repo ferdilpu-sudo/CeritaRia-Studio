@@ -14,4 +14,16 @@ abstract class UploadModule {
     abstract fun bindVideoUploadApi(
         implementation: KtorVideoUploadApi,
     ): VideoUploadApi
+
+    @Binds
+    @Singleton
+    abstract fun bindR2UploadDataSource(
+        implementation: KtorR2UploadDataSource,
+    ): R2UploadDataSource
+
+    @Binds
+    @Singleton
+    abstract fun bindVideoUploadSourceReader(
+        implementation: AndroidVideoUploadSourceReader,
+    ): VideoUploadSourceReader
 }
