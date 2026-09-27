@@ -27,4 +27,4 @@ jobs:
             ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
           fi
       - name: Verify
-        run: gradle lintDebug testDebugUnitTest assembleDebug --stacktrace
+        run: gradle lintDebug testDebugUnitTest assembleDebug assembleRelease --stacktrace
