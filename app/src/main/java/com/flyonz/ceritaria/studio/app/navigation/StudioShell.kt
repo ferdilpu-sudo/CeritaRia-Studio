@@ -18,12 +18,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.flyonz.ceritaria.studio.feature.episode.detail.EpisodeDetailScreen
+import com.flyonz.ceritaria.studio.feature.episode.list.EpisodeListScreen
 import com.flyonz.ceritaria.studio.feature.home.HomeScreen
 import com.flyonz.ceritaria.studio.feature.placeholder.PlaceholderScreen
 import com.flyonz.ceritaria.studio.feature.series.detail.SeriesDetailScreen
 import com.flyonz.ceritaria.studio.feature.series.list.SeriesListScreen
 
 private const val SERIES_DETAIL_ROUTE = "series/{seriesId}"
+private const val EPISODE_DETAIL_ROUTE = "episode/{episodeId}"
 
 @Composable
 fun StudioShell(
@@ -44,7 +47,9 @@ fun StudioShell(
                             selected = currentRoute == destination.route,
                             onClick = {
                                 navController.navigate(destination.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
                                     launchSingleTop = true
                                     restoreState = true
                                 }
@@ -67,14 +72,20 @@ fun StudioShell(
             composable(StudioDestination.Series.route) {
                 SeriesListScreen(
                     contentPadding = padding,
-                    onSeriesClick = { id -> navController.navigate("series/$id") },
+                    onSeriesClick = { id -> navController.navigate("series/" + id) },
                 )
             }
             composable(SERIES_DETAIL_ROUTE) {
                 SeriesDetailScreen(contentPadding = padding, onBack = navController::popBackStack)
             }
             composable(StudioDestination.Episodes.route) {
-                PlaceholderScreen(contentPadding = padding, titleRes = StudioDestination.Episodes.labelRes)
+                EpisodeListScreen(
+                    contentPadding = padding,
+                    onEpisodeClick = { id -> navController.navigate("episode/" + id) },
+                )
+            }
+            composable(EPISODE_DETAIL_ROUTE) {
+                EpisodeDetailScreen(contentPadding = padding, onBack = navController::popBackStack)
             }
             composable(StudioDestination.Analytics.route) {
                 PlaceholderScreen(contentPadding = padding, titleRes = StudioDestination.Analytics.labelRes)
