@@ -71,6 +71,21 @@ class VideoEncodingCoordinator @Inject constructor(
             )
             jobs.upsert(cancelled)
             throw error
+        } catch (error: VideoEncoderException) {
+            temporaryMediaStore.deleteEncodedOutput(jobId)
+            val code = when (error.code) {
+                VideoEncoderErrorCode.UNSUPPORTED_CODEC ->
+                    VideoEncodingErrorCode.UNSUPPORTED_CODEC
+                VideoEncoderErrorCode.EXPORT_FAILED ->
+                    VideoEncodingErrorCode.ENCODER_FAILED
+            }
+            val failed = current.transition(
+                status = VideoEncodingStatus.FAILED,
+                progress = current.encodingProgress,
+                errorCode = code.name,
+            )
+            jobs.upsert(failed)
+            throw VideoEncodingException(code, error)
         } catch (error: Throwable) {
             temporaryMediaStore.deleteEncodedOutput(jobId)
             val failed = current.transition(

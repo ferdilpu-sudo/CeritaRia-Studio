@@ -4,6 +4,7 @@ enum class VideoEncodingErrorCode {
     JOB_NOT_FOUND,
     ENCODING_NOT_REQUIRED,
     INSUFFICIENT_STORAGE,
+    UNSUPPORTED_CODEC,
     ENCODER_FAILED,
 }
 

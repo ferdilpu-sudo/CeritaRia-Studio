@@ -125,8 +125,20 @@ class Media3VideoEncoder @Inject constructor(
             exportResult: ExportResult,
             exportException: ExportException,
         ) {
-            completion.completeExceptionally(exportException)
+            completion.completeExceptionally(
+                VideoEncoderException(
+                    code = exportException.toEncoderErrorCode(),
+                    cause = exportException,
+                ),
+            )
         }
+    }
+
+    private fun ExportException.toEncoderErrorCode(): VideoEncoderErrorCode = when (errorCode) {
+        ExportException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED,
+        ExportException.ERROR_CODE_ENCODING_FORMAT_UNSUPPORTED,
+        -> VideoEncoderErrorCode.UNSUPPORTED_CODEC
+        else -> VideoEncoderErrorCode.EXPORT_FAILED
     }
 
     private suspend fun reportProgress(

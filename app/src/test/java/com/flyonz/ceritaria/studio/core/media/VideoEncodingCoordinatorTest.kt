@@ -53,6 +53,26 @@ class VideoEncodingCoordinatorTest {
     }
 
     @Test
+    fun unsupportedCodecIsPersistedDistinctly() = runTest {
+        val repository = FakeJobs(job())
+        val coordinator = VideoEncodingCoordinator(
+            jobs = repository,
+            encoder = FakeEncoder(
+                failure = VideoEncoderException(VideoEncoderErrorCode.UNSUPPORTED_CODEC),
+            ),
+            temporaryMediaStore = FakeStore(),
+        )
+
+        runCatching { coordinator.encode("job-1") }
+
+        assertEquals(VideoEncodingStatus.FAILED, repository.current.encodingStatus)
+        assertEquals(
+            VideoEncodingErrorCode.UNSUPPORTED_CODEC.name,
+            repository.current.lastErrorCode,
+        )
+    }
+
+    @Test
     fun cancellationIsPersistedAndRethrown() = runTest {
         val repository = FakeJobs(job())
         val coordinator = VideoEncodingCoordinator(
@@ -74,6 +94,7 @@ class VideoEncodingCoordinatorTest {
 
     private class FakeEncoder(
         private val cancel: Boolean = false,
+        private val failure: Throwable? = null,
     ) : VideoEncoder {
         var calls = 0
 
@@ -86,6 +107,7 @@ class VideoEncodingCoordinatorTest {
             calls += 1
             onProgress(EncodingProgress(55))
             if (cancel) throw CancellationException("cancelled")
+            failure?.let { throw it }
             return VideoEncodeResult(
                 outputUri = "file:/encoded/job-1.mp4",
                 sizeBytes = 5_000_000,
