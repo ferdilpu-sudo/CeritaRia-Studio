@@ -175,4 +175,24 @@
     <string name="preview_video">Preview video</string>
     <string name="preview_video_loading">Menyiapkan preview…</string>
     <string name="video_asset_preview_failed">Preview gagal: %1$s</string>
+    <string name="analytics_summary">Ringkasan</string>
+    <string name="analytics_7_days">7 hari</string>
+    <string name="analytics_30_days">30 hari</string>
+    <string name="analytics_90_days">90 hari</string>
+    <string name="analytics_today_pageviews">Pageview hari ini</string>
+    <string name="analytics_today_visitors">Visitor hari ini</string>
+    <string name="analytics_period_pageviews">Pageview %1$d hari</string>
+    <string name="analytics_period_visitors">Visitor %1$d hari</string>
+    <string name="analytics_sessions">Sessions</string>
+    <string name="analytics_total_events">Total event</string>
+    <string name="analytics_last_24_hours">Traffic 24 jam</string>
+    <string name="analytics_top_pages">Halaman teratas</string>
+    <string name="analytics_devices">Device</string>
+    <string name="analytics_referrers">Referrer</string>
+    <string name="analytics_player_events">Interaksi player</string>
+    <string name="analytics_views_value">%1$d views</string>
+    <string name="analytics_visitors_value">%1$d visitors</string>
+    <string name="analytics_empty">Belum ada data analytics pada rentang ini.</string>
+    <string name="analytics_load_error">Analytics tidak dapat dimuat.</string>
+    <string name="analytics_refresh_error">Refresh gagal. Data terakhir tetap ditampilkan.</string>
 </resources>

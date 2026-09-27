@@ -18,8 +18,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.flyonz.ceritaria.studio.feature.analytics.presentation.AnalyticsScreen
 import com.flyonz.ceritaria.studio.feature.home.HomeScreen
-import com.flyonz.ceritaria.studio.feature.placeholder.PlaceholderScreen
 
 @Composable
 fun StudioShell(
@@ -69,10 +69,7 @@ fun StudioShell(
             seriesNavGraph(navController, padding)
             episodeNavGraph(navController, padding)
             composable(StudioDestination.Analytics.route) {
-                PlaceholderScreen(
-                    contentPadding = padding,
-                    titleRes = StudioDestination.Analytics.labelRes,
-                )
+                AnalyticsScreen(contentPadding = padding)
             }
         }
     }
