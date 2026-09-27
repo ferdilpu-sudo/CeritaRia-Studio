@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun SeriesListScreen(
     contentPadding: PaddingValues,
     onSeriesClick: (String) -> Unit,
+    onCreateSeries: () -> Unit,
     viewModel: SeriesListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -30,6 +31,7 @@ fun SeriesListScreen(
             onQueryChange = viewModel::setQuery,
             onFilterChange = viewModel::setFilter,
             onSeriesClick = onSeriesClick,
+            onCreateSeries = onCreateSeries,
             onLoadMore = viewModel::loadMore,
             onRetry = viewModel::refresh,
         )

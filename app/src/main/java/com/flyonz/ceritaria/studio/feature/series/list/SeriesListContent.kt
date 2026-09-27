@@ -2,15 +2,11 @@ package com.flyonz.ceritaria.studio.feature.series.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -26,6 +22,7 @@ fun SeriesListContent(
     onQueryChange: (String) -> Unit,
     onFilterChange: (SeriesFilter) -> Unit,
     onSeriesClick: (String) -> Unit,
+    onCreateSeries: () -> Unit,
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
 ) {
@@ -40,22 +37,13 @@ fun SeriesListContent(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            Text(
-                text = stringResource(R.string.series),
-                modifier = Modifier.padding(bottom = 4.dp),
+            SeriesListHeader(
+                query = state.query,
+                filter = state.filter,
+                onQueryChange = onQueryChange,
+                onFilterChange = onFilterChange,
+                onCreateSeries = onCreateSeries,
             )
-        }
-        item {
-            OutlinedTextField(
-                value = state.query,
-                onValueChange = onQueryChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.search_series)) },
-                singleLine = true,
-            )
-        }
-        item {
-            SeriesFilterRow(selected = state.filter, onSelected = onFilterChange)
         }
 
         when {
@@ -89,28 +77,4 @@ fun SeriesListContent(
             }
         }
     }
-}
-
-@Composable
-private fun SeriesFilterRow(
-    selected: SeriesFilter,
-    onSelected: (SeriesFilter) -> Unit,
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        SeriesFilter.entries.forEach { filter ->
-            FilterChip(
-                selected = selected == filter,
-                onClick = { onSelected(filter) },
-                label = { Text(filter.label()) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun SeriesFilter.label(): String = when (this) {
-    SeriesFilter.ALL -> stringResource(R.string.filter_all)
-    SeriesFilter.PUBLISHED -> stringResource(R.string.status_published)
-    SeriesFilter.DRAFT -> stringResource(R.string.status_draft)
-    SeriesFilter.FEATURED -> stringResource(R.string.filter_featured)
 }

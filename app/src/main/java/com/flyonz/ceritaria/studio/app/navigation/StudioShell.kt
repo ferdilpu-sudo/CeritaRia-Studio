@@ -23,10 +23,13 @@ import com.flyonz.ceritaria.studio.feature.episode.list.EpisodeListScreen
 import com.flyonz.ceritaria.studio.feature.home.HomeScreen
 import com.flyonz.ceritaria.studio.feature.placeholder.PlaceholderScreen
 import com.flyonz.ceritaria.studio.feature.series.detail.SeriesDetailScreen
+import com.flyonz.ceritaria.studio.feature.series.editor.SeriesEditorScreen
 import com.flyonz.ceritaria.studio.feature.series.list.SeriesListScreen
 
 private const val SERIES_DETAIL_ROUTE = "series/{seriesId}"
 private const val SERIES_EPISODES_ROUTE = "series/{seriesId}/episodes"
+private const val SERIES_EDITOR_NEW_ROUTE = "series-editor/new"
+private const val SERIES_EDITOR_EDIT_ROUTE = "series-editor/{seriesId}"
 private const val EPISODE_DETAIL_ROUTE = "episode/{episodeId}"
 
 @Composable
@@ -63,36 +66,52 @@ fun StudioShell(
             }
         },
     ) { padding ->
-        NavHost(
-            navController = navController,
-            startDestination = StudioDestination.Home.route,
-        ) {
+        NavHost(navController = navController, startDestination = StudioDestination.Home.route) {
             composable(StudioDestination.Home.route) {
                 HomeScreen(contentPadding = padding, userEmail = userEmail, onSignOut = onSignOut)
             }
             composable(StudioDestination.Series.route) {
                 SeriesListScreen(
                     contentPadding = padding,
-                    onSeriesClick = { id -> navController.navigate("series/" + id) },
+                    onSeriesClick = { id -> navController.navigate("series/$id") },
+                    onCreateSeries = { navController.navigate(SERIES_EDITOR_NEW_ROUTE) },
                 )
             }
             composable(SERIES_DETAIL_ROUTE) {
                 SeriesDetailScreen(
                     contentPadding = padding,
                     onBack = navController::popBackStack,
-                    onEpisodesClick = { id -> navController.navigate("series/" + id + "/episodes") },
+                    onEpisodesClick = { id -> navController.navigate("series/$id/episodes") },
+                    onEditClick = { id -> navController.navigate("series-editor/$id") },
+                    onDeleted = {
+                        navController.popBackStack(StudioDestination.Series.route, inclusive = false)
+                    },
+                )
+            }
+            composable(SERIES_EDITOR_NEW_ROUTE) {
+                SeriesEditorScreen(
+                    contentPadding = padding,
+                    onBack = navController::popBackStack,
+                    onSaved = { id -> navigateToFreshSeriesDetail(navController, id) },
+                )
+            }
+            composable(SERIES_EDITOR_EDIT_ROUTE) {
+                SeriesEditorScreen(
+                    contentPadding = padding,
+                    onBack = navController::popBackStack,
+                    onSaved = { id -> navigateToFreshSeriesDetail(navController, id) },
                 )
             }
             composable(SERIES_EPISODES_ROUTE) {
                 EpisodeListScreen(
                     contentPadding = padding,
-                    onEpisodeClick = { id -> navController.navigate("episode/" + id) },
+                    onEpisodeClick = { id -> navController.navigate("episode/$id") },
                 )
             }
             composable(StudioDestination.Episodes.route) {
                 EpisodeListScreen(
                     contentPadding = padding,
-                    onEpisodeClick = { id -> navController.navigate("episode/" + id) },
+                    onEpisodeClick = { id -> navController.navigate("episode/$id") },
                 )
             }
             composable(EPISODE_DETAIL_ROUTE) {
@@ -102,6 +121,16 @@ fun StudioShell(
                 PlaceholderScreen(contentPadding = padding, titleRes = StudioDestination.Analytics.labelRes)
             }
         }
+    }
+}
+
+private fun navigateToFreshSeriesDetail(
+    navController: androidx.navigation.NavHostController,
+    seriesId: String,
+) {
+    navController.navigate("series/$seriesId") {
+        popUpTo(StudioDestination.Series.route)
+        launchSingleTop = true
     }
 }
 
