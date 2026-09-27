@@ -482,29 +482,63 @@ Changes made from Android must still be smoke-tested against the real Supabase p
 
 ---
 
-## Phase 4 — Image Media
+## Phase 4 — Image Media 🟡 IMPLEMENTED / PRODUCTION SMOKE PENDING
+
+Implementation is committed and CI verified. GitHub Actions run `36305633832` passed the repository Verify step after the final Phase 4 cleanup.
 
 ### Scope
 
 Complete the current image workflow before the heavier video pipeline.
 
-### Tasks
+### Implementation status
 
-- system Photo Picker;
-- MIME/size validation;
-- image preparation/compression where appropriate;
-- cover upload;
-- hero upload;
-- thumbnail upload;
-- progress/cancel/retry;
-- replace/remove media;
-- preview;
-- atomic DB-reference update;
-- safe old-object cleanup.
+- [x] system Photo Picker with image-only selection;
+- [x] no broad gallery/storage permission;
+- [x] best-effort persisted URI read access before durable work;
+- [x] JPEG/PNG/WebP validation;
+- [x] production 5 MiB size limit enforced from metadata and streamed copy;
+- [x] source preparation without loading the complete image into memory;
+- [x] Series cover upload to `series-media`;
+- [x] Series hero upload to `series-media`;
+- [x] Episode thumbnail upload to `episode-media`;
+- [x] WorkManager-backed durable replace/remove work;
+- [x] network constraint, retry, cancel, and progress;
+- [x] byte-based Supabase Storage upload progress;
+- [x] artwork preview;
+- [x] safe replace/remove flow;
+- [x] DB reference updated only after new upload succeeds;
+- [x] newly uploaded object rollback attempted when DB update fails;
+- [x] old owned object cleaned only after new DB reference succeeds;
+- [x] cleanup restricted to configured Supabase host + expected bucket;
+- [x] external legacy/manual URLs are not deleted;
+- [x] cleanup failure cannot invalidate a correct new DB reference;
+- [x] cancellation is propagated rather than converted into retry;
+- [x] new content must be saved once before media upload is enabled;
+- [x] media success synchronizes current + initial editor forms;
+- [x] obsolete manual Series media-URL editor removed;
+- [x] validator, cleanup, replacement-order, rollback, cancellation, and ViewModel tests;
+- [x] handwritten files remain within responsibility/line-count limits;
+- [x] final Phase 4 CI run `36305633832` succeeded;
+- [ ] production admin smoke test for upload/replace/remove/retry/cancel;
+- [ ] verify resulting artwork in existing Ceritaria web/PWA.
+
+### Replacement safety contract
+
+```text
+select image
+  -> validate/copy
+  -> upload new object
+  -> update one DB media reference
+  -> best-effort cleanup old owned object
+```
+
+Upload failure leaves the previous DB reference untouched. DB-reference failure triggers best-effort rollback of the new object. Cleanup never happens before the new reference is valid.
 
 ### Exit gate
 
-Image operations survive normal navigation/backgrounding and never leave a published record pointing to a failed/missing replacement object.
+Code/build gate: **PASS**. Production integration smoke gate: **PENDING CONFIGURATION**.
+
+Before Phase 4 receives a final green completion marker, an authorized admin must run the configured APK against the real Supabase project and verify upload/replace/remove behavior and resulting web/PWA artwork.
 
 ---
 
