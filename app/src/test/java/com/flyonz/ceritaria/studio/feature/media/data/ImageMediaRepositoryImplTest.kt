@@ -3,6 +3,7 @@ package com.flyonz.ceritaria.studio.feature.media.data
 import com.flyonz.ceritaria.studio.feature.media.domain.ImageMediaSlot
 import com.flyonz.ceritaria.studio.feature.media.domain.ImageSelection
 import java.io.File
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -56,6 +57,30 @@ class ImageMediaRepositoryImplTest {
     }
 
     @Test
+    fun cancellationDuringCleanupIsNotSwallowed() = runTest {
+        val repository = ImageMediaRepositoryImpl(
+            FakeStorage(
+                events = mutableListOf(),
+                cleanupFailure = CancellationException("cancelled"),
+            ),
+            FakeReferences(mutableListOf()),
+        )
+
+        var cancelled = false
+        try {
+            repository.remove(
+                ownerId = "owner-1",
+                slot = ImageMediaSlot.SERIES_COVER,
+                oldPublicUrl = "https://project.supabase.co/storage/v1/object/public/series-media/owner-1/old.webp",
+            )
+        } catch (_: CancellationException) {
+            cancelled = true
+        }
+
+        assertTrue(cancelled)
+    }
+
+    @Test
     fun removeClearsReferenceBeforeCleanup() = runTest {
         val events = mutableListOf<String>()
         val repository = ImageMediaRepositoryImpl(
@@ -74,6 +99,7 @@ class ImageMediaRepositoryImplTest {
 
     private class FakeStorage(
         private val events: MutableList<String>,
+        private val cleanupFailure: Throwable? = null,
     ) : ImageStorageDataSource {
         override suspend fun upload(
             bucket: String,
@@ -94,6 +120,7 @@ class ImageMediaRepositoryImplTest {
             expectedBucket: String,
             publicUrl: String?,
         ) {
+            cleanupFailure?.let { throw it }
             events += "cleanup"
         }
     }
