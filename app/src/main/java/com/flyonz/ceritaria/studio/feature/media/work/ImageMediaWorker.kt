@@ -12,6 +12,7 @@ import com.flyonz.ceritaria.studio.feature.media.source.ImageSourceReader
 import com.flyonz.ceritaria.studio.feature.media.source.PreparedImage
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 
 @HiltWorker
 class ImageMediaWorker @AssistedInject constructor(
@@ -59,6 +60,8 @@ class ImageMediaWorker @AssistedInject constructor(
                     KEY_PROGRESS to 100,
                 ),
             )
+        } catch (error: CancellationException) {
+            throw error
         } catch (error: ImageSourceException) {
             failure(error.issue?.name ?: ERROR_SOURCE)
         } catch (_: IllegalArgumentException) {
@@ -83,6 +86,8 @@ class ImageMediaWorker @AssistedInject constructor(
                 KEY_PROGRESS to 100,
             ),
         )
+    } catch (error: CancellationException) {
+        throw error
     } catch (_: IllegalArgumentException) {
         failure(ERROR_CONFIGURATION)
     } catch (_: Throwable) {

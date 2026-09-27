@@ -6,6 +6,7 @@ import com.flyonz.ceritaria.studio.feature.media.domain.ImageSelection
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 
 @Singleton
 class ImageMediaRepositoryImpl @Inject constructor(
@@ -31,15 +32,15 @@ class ImageMediaRepositoryImpl @Inject constructor(
         )
         try {
             references.updateReference(ownerId, slot, newPublicUrl)
+        } catch (error: CancellationException) {
+            throw error
         } catch (error: Throwable) {
-            runCatching { storage.deleteObject(contract.bucket, objectPath) }
+            bestEffortDeleteObject(contract.bucket, objectPath)
             throw error
         }
 
         if (oldPublicUrl != newPublicUrl) {
-            runCatching {
-                storage.deleteOwnedPublicUrl(contract.bucket, oldPublicUrl)
-            }
+            bestEffortDeleteOwnedUrl(contract.bucket, oldPublicUrl)
         }
         return newPublicUrl
     }
@@ -50,9 +51,29 @@ class ImageMediaRepositoryImpl @Inject constructor(
         oldPublicUrl: String?,
     ) {
         references.updateReference(ownerId, slot, null)
-        val contract = slot.contract()
-        runCatching {
-            storage.deleteOwnedPublicUrl(contract.bucket, oldPublicUrl)
+        bestEffortDeleteOwnedUrl(slot.contract().bucket, oldPublicUrl)
+    }
+
+    private suspend fun bestEffortDeleteObject(bucket: String, path: String) {
+        try {
+            storage.deleteObject(bucket, path)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Throwable) {
+            Unit
+        }
+    }
+
+    private suspend fun bestEffortDeleteOwnedUrl(
+        bucket: String,
+        publicUrl: String?,
+    ) {
+        try {
+            storage.deleteOwnedPublicUrl(bucket, publicUrl)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Throwable) {
+            Unit
         }
     }
 }
