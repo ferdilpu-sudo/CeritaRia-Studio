@@ -851,78 +851,44 @@ Production completion remains pending a configured admin smoke test against the 
 
 ---
 
-## Phase 9 — Testing & Hardening
+## Phase 9 — Testing & Hardening 🟡 AUTOMATED HARDENING IMPLEMENTED / FINAL HEAD CI PENDING
 
-### Unit tests
+### Automated coverage and hardening completed
 
-- DTO/domain mapping;
-- validators;
-- provider parsing;
-- streaming preset calculation;
-- compatibility checker;
-- ViewModel state transitions;
-- Room video-job mapping/state transitions;
-- upload state machine;
-- replacement/publish guards.
+- [x] DTO/domain mapper, validator, provider, compatibility, Room, encoding, upload, analytics, auth/session, editor, reorder, image-media, and R2 attachment unit coverage;
+- [x] release APK assembly is part of normal CI;
+- [x] handwritten Kotlin line guardrails enforced in CI;
+- [x] privileged server credential identifiers rejected from Android source;
+- [x] potential sensitive token/password logging and JWT-like literals rejected in CI;
+- [x] Room schema generation moved to the official Room Gradle Plugin so debug/release KSP schema work has reproducible variant-aware inputs/outputs;
+- [x] CI actions upgraded to supported Node 24-based releases;
+- [x] superseded Android workflow runs cancel through workflow concurrency;
+- [x] upload recovery preserves UNAUTHENTICATED/FORBIDDEN/server failures instead of silently replacing the remote session;
+- [x] upload-session cleanup is truly best-effort while preserving coroutine cancellation;
+- [x] WorkManager and Android 14+ UIDT paths share the same retry classification;
+- [x] unrecoverable auth/config/source errors stop automatic retry;
+- [x] transient network/R2/server/session errors remain retryable;
+- [x] missing/unavailable local video sources map to SOURCE_NOT_READY;
+- [x] failed finalize and multipart transfer retain the prepared local video for retry;
+- [x] completed multipart parts remain persisted after a later part fails;
+- [x] duplicate login, attach, preview, Series save, Episode save, and reorder actions are blocked synchronously;
+- [x] cancellation semantics remain explicit across image, encode, upload recovery, Worker, and UIDT execution;
+- [x] previous valid production media remains untouched until replacement/finalization succeeds.
 
-### Integration tests
+### Still requires environment/device verification
 
-- Supabase mappings against a safe test/staging environment when available;
-- RLS authorization cases;
-- storage conventions;
-- R2 upload-session contract;
-- upload finalization;
-- Room recovery.
-
-### UI tests
-
-Critical flows:
-
-- login/session restore;
-- series navigation;
-- create/edit draft;
-- publish confirmation;
-- dirty-form exit;
-- image upload states;
-- local video selection;
-- encode progress/failure/cancel;
-- upload retry;
-- replacement confirmation.
-
-### Failure scenarios
-
-Test explicitly:
-
-- no network;
-- network loss during transfer;
-- expired auth session;
-- unauthorized user;
-- process death;
-- application recreation;
-- source URI unavailable;
-- insufficient device storage;
-- unsupported codec;
-- encoder cancellation;
-- multipart part failure;
-- server finalization failure;
-- upload succeeds but verification fails;
-- previous production video remains valid after failed replacement.
-
-### Quality checks
-
-- no privileged secret in APK;
-- no raw token logging;
-- no file above hard limit unless generated;
-- no God ViewModel/repository;
-- no generic media manager combining unrelated responsibilities;
-- no production schema field invented by Android;
-- accessibility labels/focus/touch targets reviewed;
-- loading/content/empty/error states present;
-- release build compiles.
+- [ ] production/staging Supabase RLS authorization matrix;
+- [ ] production image Storage policy smoke;
+- [ ] real R2 single and multipart transfer with network interruption;
+- [ ] expired real Supabase session during transfer;
+- [ ] real process death / application recreation during media work;
+- [ ] representative hardware codec matrix;
+- [ ] accessibility/focus/touch-target manual pass on representative phones/tablets;
+- [ ] final production web/PWA compatibility smoke after controlled mutations.
 
 ### Exit gate
 
-All critical user flows and media failure paths are deterministic, recoverable where expected, and verified by tests appropriate to the layer.
+Automated code/build hardening is considered complete only after the latest Phase 9 head passes the full Android CI workflow. Environment-specific and real-device items remain explicit release-candidate gates and must not be claimed from unit CI.
 
 ---
 
