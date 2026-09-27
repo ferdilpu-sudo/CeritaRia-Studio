@@ -4,6 +4,7 @@ import com.flyonz.ceritaria.studio.core.database.videojob.VideoJob
 import com.flyonz.ceritaria.studio.core.media.VideoEncodingStatus
 import com.flyonz.ceritaria.studio.core.media.VideoMetadata
 import java.time.Instant
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -77,6 +78,35 @@ class VideoUploadRecoveryResolverTest {
     }
 
     @Test
+    fun cancelFailureDoesNotBlockFreshSessionRecovery() = runTest {
+        val api = FakeApi(
+            statusError = VideoUploadApiException("UPLOAD_SESSION_NOT_FOUND", 404),
+            cancelError = IllegalStateException("network down"),
+        )
+        val resolver = VideoUploadRecoveryResolver(api, codec)
+
+        val plan = resolver.resolve(jobWithSession())
+
+        assertTrue(plan is VideoUploadRecoveryPlan.NewSession)
+        assertEquals(1, api.cancelCalls)
+    }
+
+    @Test
+    fun cancellationDuringBestEffortCancelIsRethrown() = runTest {
+        val api = FakeApi(
+            statusError = VideoUploadApiException("UPLOAD_SESSION_NOT_FOUND", 404),
+            cancelError = CancellationException("cancelled"),
+        )
+        val resolver = VideoUploadRecoveryResolver(api, codec)
+
+        val error = runCatching {
+            resolver.resolve(jobWithSession())
+        }.exceptionOrNull()
+
+        assertTrue(error is CancellationException)
+    }
+
+    @Test
     fun readyRemoteAssetReturnsReadyPlan() = runTest {
         val api = FakeApi(
             status = remoteStatus(
@@ -124,6 +154,7 @@ class VideoUploadRecoveryResolverTest {
     private class FakeApi(
         private val status: RemoteVideoUploadStatus? = null,
         private val statusError: VideoUploadApiException? = null,
+        private val cancelError: Throwable? = null,
     ) : VideoUploadApi {
         var cancelCalls = 0
 
@@ -148,6 +179,7 @@ class VideoUploadRecoveryResolverTest {
 
         override suspend fun cancelUpload(sessionId: String) {
             cancelCalls += 1
+            cancelError?.let { throw it }
         }
 
         override suspend fun getStatus(sessionId: String): RemoteVideoUploadStatus {

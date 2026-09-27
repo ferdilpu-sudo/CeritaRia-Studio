@@ -2,6 +2,7 @@ package com.flyonz.ceritaria.studio.core.upload
 
 import com.flyonz.ceritaria.studio.core.database.videojob.VideoJob
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 
 class VideoUploadRecoveryResolver @Inject constructor(
     private val api: VideoUploadApi,
@@ -65,7 +66,9 @@ class VideoUploadRecoveryResolver @Inject constructor(
     private suspend fun cancelBestEffort(sessionId: String) {
         try {
             api.cancelUpload(sessionId)
-        } catch (_: VideoUploadApiException) {
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Throwable) {
             Unit
         }
     }
