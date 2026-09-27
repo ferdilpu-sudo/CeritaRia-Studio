@@ -10,8 +10,8 @@ data class AnalyticsReport(
     val events: List<AnalyticsPoint>,
 ) {
     val isEmpty: Boolean
-        get() = summary.totalEvents == 0 &&
-            hourly.all { it.value == 0 } &&
+        get() = summary.totalEvents == 0L &&
+            hourly.all { it.value == 0L } &&
             topPages.isEmpty() &&
             devices.isEmpty() &&
             referrers.isEmpty() &&
