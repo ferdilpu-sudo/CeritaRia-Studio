@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.flyonz.ceritaria.studio.R
 import com.flyonz.ceritaria.studio.feature.media.presentation.ImageMediaEffect
 import com.flyonz.ceritaria.studio.feature.media.presentation.ImageMediaViewModel
+import com.flyonz.ceritaria.studio.feature.episode.editor.video.EpisodeLocalVideoViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,9 +37,11 @@ fun EpisodeEditorScreen(
     onSaved: (String) -> Unit,
     viewModel: EpisodeEditorViewModel = hiltViewModel(),
     mediaViewModel: ImageMediaViewModel = hiltViewModel(),
+    localVideoViewModel: EpisodeLocalVideoViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val mediaState by mediaViewModel.state.collectAsStateWithLifecycle()
+    val localVideoState by localVideoViewModel.state.collectAsStateWithLifecycle()
     var showDiscardDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
@@ -83,6 +86,8 @@ fun EpisodeEditorScreen(
             viewModel = viewModel,
             mediaStates = mediaState,
             mediaViewModel = mediaViewModel,
+            localVideoState = localVideoState,
+            localVideoViewModel = localVideoViewModel,
         )
     }
 

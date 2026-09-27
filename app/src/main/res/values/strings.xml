@@ -136,4 +136,19 @@
     <string name="media_replace">Ganti gambar</string>
     <string name="media_choose">Pilih gambar</string>
     <string name="remove">Hapus gambar</string>
+    <string name="local_video">Video lokal</string>
+    <string name="select_local_video">Pilih video lokal</string>
+    <string name="replace_local_video">Ganti video lokal</string>
+    <string name="local_video_save_first">Simpan episode terlebih dahulu sebelum memilih video lokal.</string>
+    <string name="local_video_inspecting">Memeriksa metadata video…</string>
+    <string name="local_video_ready_direct">Siap diunggah · tidak perlu encode ulang.</string>
+    <string name="local_video_ready_encode">Video perlu disiapkan sebelum upload.</string>
+    <string name="local_video_encoding">Menyiapkan video %1$d%%</string>
+    <string name="local_video_encoded_ready">Video lokal siap untuk tahap upload.</string>
+    <string name="local_video_failed">Pemrosesan video gagal: %1$s</string>
+    <string name="local_video_cancelled">Encoding dibatalkan. Output dapat disiapkan ulang.</string>
+    <string name="prepare_video">Siapkan video</string>
+    <string name="cancel_encoding">Batalkan encoding</string>
+    <string name="source_video">Source</string>
+    <string name="studio_video_output">Studio output: MP4 · H.264 · max 1080×1920 · ≤30 fps · AAC</string>
 </resources>

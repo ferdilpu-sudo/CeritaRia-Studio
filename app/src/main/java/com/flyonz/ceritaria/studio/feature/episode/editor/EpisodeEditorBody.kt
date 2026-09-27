@@ -18,6 +18,9 @@ import com.flyonz.ceritaria.studio.R
 import com.flyonz.ceritaria.studio.feature.media.domain.ImageMediaSlot
 import com.flyonz.ceritaria.studio.feature.media.presentation.ImageMediaUiState
 import com.flyonz.ceritaria.studio.feature.media.presentation.ImageMediaViewModel
+import com.flyonz.ceritaria.studio.feature.episode.editor.video.EpisodeLocalVideoSection
+import com.flyonz.ceritaria.studio.feature.episode.editor.video.EpisodeLocalVideoUiState
+import com.flyonz.ceritaria.studio.feature.episode.editor.video.EpisodeLocalVideoViewModel
 
 @Composable
 fun EpisodeEditorBody(
@@ -25,11 +28,20 @@ fun EpisodeEditorBody(
     viewModel: EpisodeEditorViewModel,
     mediaStates: Map<ImageMediaSlot, ImageMediaUiState>,
     mediaViewModel: ImageMediaViewModel,
+    localVideoState: EpisodeLocalVideoUiState,
+    localVideoViewModel: EpisodeLocalVideoViewModel,
 ) {
     when {
         state.isLoading -> CircularProgressIndicator(modifier = Modifier.padding(24.dp))
         state.loadFailed -> LoadFailed(viewModel::retry)
-        else -> EditorForm(state, viewModel, mediaStates, mediaViewModel)
+        else -> EditorForm(
+            state,
+            viewModel,
+            mediaStates,
+            mediaViewModel,
+            localVideoState,
+            localVideoViewModel,
+        )
     }
 }
 
@@ -49,6 +61,8 @@ private fun EditorForm(
     viewModel: EpisodeEditorViewModel,
     mediaStates: Map<ImageMediaSlot, ImageMediaUiState>,
     mediaViewModel: ImageMediaViewModel,
+    localVideoState: EpisodeLocalVideoUiState,
+    localVideoViewModel: EpisodeLocalVideoViewModel,
 ) {
     LazyColumn(
         contentPadding = PaddingValues(20.dp),
@@ -72,6 +86,14 @@ private fun EditorForm(
         }
         item { EpisodeStorySection(state.form, state.validationErrors, viewModel::setForm) }
         item { EpisodeVideoSection(state.form, state.validationErrors, viewModel::setForm) }
+        item {
+            EpisodeLocalVideoSection(
+                state = localVideoState,
+                onSelected = localVideoViewModel::select,
+                onPrepare = localVideoViewModel::prepareVideo,
+                onCancel = localVideoViewModel::cancelEncoding,
+            )
+        }
         item {
             EpisodeArtworkSection(
                 recordId = state.recordId,
