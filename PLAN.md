@@ -310,38 +310,35 @@ Do not implement frontend, backend contract, media engine, and analytics simulta
 
 ---
 
-## Phase 0 — Production Contract Audit
+## Phase 0 — Production Contract Audit ✅ COMPLETE
 
-### Scope
+Audit completed on **2026-09-27** against `ferdilpu-sudo/ceritaria` branch `main`, tree SHA `c7ea336224a5baaf37af3645ff375981051a8b31`.
 
-Audit the real Ceritaria production contract before implementing persistence-heavy features.
+Detailed evidence and findings are recorded in `PHASE-0-AUDIT.md`. The verified Android-facing contract is now in `SCHEMA.md`.
 
-### Tasks
+### Verified outcomes
 
-- inspect current `supabase/migrations/*` in order;
-- record exact `series` schema;
-- record exact `episodes` schema;
-- inspect `admin_users` authorization;
-- inspect RLS policies;
-- inspect storage buckets/policies;
-- inspect existing CMS create/update/delete/publish actions;
-- inspect TypeScript database types;
-- inspect analytics tables/views/RPCs;
-- verify current YouTube/Facebook provider representation;
-- determine whether R2 assets require a production migration;
-- reconcile all discoveries into `SCHEMA.md`.
+- exact `admin_users`, `series`, `episodes`, and `analytics_events` fields recorded;
+- RLS/admin authorization confirmed;
+- image buckets, MIME limits, size limits, and current object-path convention confirmed;
+- CMS create/update/publish/delete behavior confirmed;
+- publish-state mapping confirmed from `is_published`, `published_at`, and `deleted_at`;
+- YouTube/Facebook provider constraint confirmed;
+- analytics RPC contract confirmed;
+- restore confirmed as unsupported by current CMS;
+- no dedicated reorder RPC exists;
+- no production R2/video asset schema exists;
+- no R2 upload/finalization API routes exist.
 
-### Deliverables
+### Required later backend work
 
-- verified Android-facing data contract;
-- exact field names and types;
-- confirmed authorization rules;
-- list of required migrations, if any;
-- list of server endpoints required for R2.
+R2 delivery requires a backward-compatible production extension because `episodes.video_provider` currently allows only `youtube|facebook` and no `video_assets` entity exists.
+
+Drag reorder must not ship until a conflict-safe server/RPC strategy exists for the unique `(series_id, episode_number)` constraint.
 
 ### Exit gate
 
-No Android repository implementation may invent an unverified production field.
+**PASS.** Phase 1/2 may use the verified production contract without inventing schema fields.
 
 ---
 
@@ -881,31 +878,30 @@ These documents now form one specification set and should be changed together wh
 
 ---
 
-## 14. Remaining Risks / Decisions to Resolve in Phase 0
+## 14. Post–Phase 0 Open Decisions
 
-These are intentionally not guessed in this plan:
+Phase 0 resolved the production schema, publish model, RLS/admin model, image storage convention, analytics contract, and current media-provider constraints.
 
-1. exact production `series` and `episodes` field names/types;
-2. exact current publish-state representation;
-3. exact RLS/admin authorization model;
-4. existing storage bucket/path conventions;
-5. whether production already has a generic media-assets table;
-6. whether an R2-specific migration is required;
-7. final video delivery/player URL strategy;
-8. exact server endpoint naming and response envelope;
-9. exact maximum accepted upload size;
-10. exact multipart threshold/part-size policy;
-11. staging/test backend availability;
-12. minimum/target Android SDK after inspecting the intended device support matrix.
+The remaining decisions belong to later implementation phases:
 
-None of these should be invented by the Android agent merely to keep coding moving.
+1. final R2 video delivery/player URL strategy;
+2. final `video_assets` migration design;
+3. exact R2 server endpoint names and response envelope;
+4. maximum accepted direct-upload video size;
+5. multipart threshold and part-size policy;
+6. conflict-safe episode reorder RPC/algorithm;
+7. whether a restore workflow should be added later;
+8. staging/test backend availability;
+9. minimum/target Android SDK and device support matrix.
+
+These are not blockers for Phase 1 foundation or Phase 2 read-only catalog. They must not be guessed when their owning phase begins.
 
 ---
 
 ## 15. Final Build Sequence
 
 ```text
-0. Production Contract Audit
+0. Production Contract Audit ✅
         ↓
 1. Android Foundation
         ↓
