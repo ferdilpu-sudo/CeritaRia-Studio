@@ -12,6 +12,7 @@ import io.ktor.http.isSuccess
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.writeFully
 import java.io.EOFException
+import java.io.FileNotFoundException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.currentCoroutineContext
@@ -69,7 +70,7 @@ class KtorR2UploadDataSource @Inject constructor(
         lengthBytes: Long,
         onProgress: suspend (Long) -> Unit,
     ) {
-        sourceReader.open(source.uri, offsetBytes).use { input ->
+        openSource(source.uri, offsetBytes).use { input ->
             val buffer = ByteArray(BUFFER_SIZE)
             var remaining = lengthBytes
             var sent = 0L
@@ -88,6 +89,17 @@ class KtorR2UploadDataSource @Inject constructor(
             }
         }
     }
+
+    private fun openSource(sourceUri: String, offsetBytes: Long): java.io.InputStream =
+        try {
+            sourceReader.open(sourceUri, offsetBytes)
+        } catch (error: FileNotFoundException) {
+            throw VideoUploadException(VideoUploadErrorCode.SOURCE_NOT_READY, error)
+        } catch (error: SecurityException) {
+            throw VideoUploadException(VideoUploadErrorCode.SOURCE_NOT_READY, error)
+        } catch (error: IllegalArgumentException) {
+            throw VideoUploadException(VideoUploadErrorCode.SOURCE_NOT_READY, error)
+        }
 
     private fun HttpResponse.requireSuccess() {
         if (!status.isSuccess()) {
