@@ -26,4 +26,10 @@ abstract class UploadModule {
     abstract fun bindVideoUploadSourceReader(
         implementation: AndroidVideoUploadSourceReader,
     ): VideoUploadSourceReader
+
+    @Binds
+    @Singleton
+    abstract fun bindVideoUploadRepository(
+        implementation: VideoUploadRepositoryImpl,
+    ): VideoUploadRepository
 }
