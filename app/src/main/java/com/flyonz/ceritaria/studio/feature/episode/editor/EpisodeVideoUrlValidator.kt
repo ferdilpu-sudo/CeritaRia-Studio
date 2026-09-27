@@ -2,7 +2,6 @@ package com.flyonz.ceritaria.studio.feature.episode.editor
 
 import java.net.URI
 import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 
 object EpisodeVideoUrlValidator {
     fun isValid(provider: String, value: String): Boolean = when (provider) {
@@ -53,7 +52,7 @@ object EpisodeVideoUrlValidator {
                 val parts = pair.split("=", limit = 2)
                 if (parts.firstOrNull() == name) {
                     parts.getOrNull(1)?.let {
-                        URLDecoder.decode(it, StandardCharsets.UTF_8)
+                        URLDecoder.decode(it, "UTF-8")
                     }
                 } else {
                     null
