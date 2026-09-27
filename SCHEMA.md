@@ -352,15 +352,51 @@ Android must not expose Restore until a production restore contract is deliberat
 
 ## 9. Episode ordering
 
-Status: **PARTIALLY VERIFIED**
+Baseline audit status: **PARTIALLY VERIFIED**  
+Post-audit extension status: **IMPLEMENTED IN REPOSITORY / PRODUCTION APPLY PENDING**
 
-Ordering currently uses `episode_number`.
+Ordering uses `episode_number`. The public per-series episode reader orders by `episode_number ASC`.
 
-The unique constraint `(series_id, episode_number)` prevents duplicates.
+The unique constraint:
 
-There is no dedicated production reorder RPC in the audited repository.
+```text
+(series_id, episode_number)
+```
 
-Android may edit one episode number using existing semantics, but a drag-and-drop multi-row reorder must remain disabled until a conflict-safe server/RPC strategy is implemented and verified.
+prevents duplicate numbers, including collisions with rows that are already soft-deleted.
+
+The Phase 0 audited tree did not contain a dedicated reorder RPC. After that audit, migration:
+
+```text
+supabase/migrations/005_episode_reorder_rpc.sql
+```
+
+was added to `ferdilpu-sudo/ceritaria`.
+
+It defines:
+
+```text
+reorder_episodes(
+  target_series_id uuid,
+  ordered_episode_ids uuid[]
+)
+```
+
+The RPC:
+
+1. requires `public.is_admin()`;
+2. requires every active episode in the target series exactly once;
+3. rejects duplicate or foreign/deleted episode IDs;
+4. captures the existing ordered set of active `episode_number` values;
+5. moves active rows to a temporary range above every current/historical number;
+6. maps the captured numbers back onto episode IDs in the requested order;
+7. performs the operation atomically inside one PostgreSQL function call.
+
+The algorithm deliberately preserves the existing active number set instead of compacting to `1..N`. This avoids collisions with soft-deleted episodes that still own historical numbers under the unique constraint.
+
+Android may use reorder only after migration 005 is applied to the target Supabase environment. A Git commit containing the migration is not proof that production has already executed it.
+
+The existing web/PWA per-series reader will reflect the reordered values automatically because it already sorts by `episode_number`. The global admin episode list remains a recency-oriented list ordered by `created_at`, not a per-series reorder surface.
 
 ---
 

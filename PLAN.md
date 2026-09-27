@@ -435,31 +435,50 @@ Before Phase 2 receives a final green completion marker, an authorized admin mus
 
 ---
 
-## Phase 3 — Content Mutations
+## Phase 3 — Content Mutations 🟡 IMPLEMENTED / PRODUCTION MIGRATION + SMOKE PENDING
+
+Android mutation code is implemented and CI verified. Series and episode create/edit/publish/unpublish/delete flows use the existing production contract. Episode reorder uses a new conflict-safe backend migration committed to the Ceritaria repository as `supabase/migrations/005_episode_reorder_rpc.sql`.
+
+The code/build gate is complete. Production completion still requires applying migration 005 to the real Supabase project and smoke-testing mutations with an authorized admin account.
 
 ### Scope
 
 Implement production-compatible editing and publishing.
 
-### Tasks
+### Implementation status
 
-- create/edit series;
-- create/edit episode;
-- draft save;
-- publish;
-- unpublish where supported;
-- featured toggle;
-- soft delete;
-- restore where production supports it;
-- episode reorder;
-- validation matching existing web behavior;
-- duplicate-save protection;
-- dirty-form protection;
-- success/failure feedback.
+- [x] create/edit series;
+- [x] create/edit episode;
+- [x] draft save;
+- [x] publish;
+- [x] unpublish while preserving existing `published_at`;
+- [x] featured toggle;
+- [x] series soft delete through `soft_delete_series`;
+- [x] episode soft delete through verified direct-update semantics;
+- [x] restore intentionally omitted because production still does not support it;
+- [x] conflict-safe episode reorder Android contract and UI;
+- [x] backend reorder RPC migration authored and CI verified in `ferdilpu-sudo/ceritaria`;
+- [x] validation aligned with current web CMS rules, including provider-specific YouTube/Facebook URL validation;
+- [x] duplicate-save protection;
+- [x] dirty-form protection;
+- [x] success/failure feedback;
+- [x] mutation/navigation files remain within responsibility and line-count rules;
+- [x] Android `lintDebug`, `testDebugUnitTest`, and `assembleDebug` pass after mutation implementation;
+- [ ] apply `005_episode_reorder_rpc.sql` to production Supabase;
+- [ ] production admin smoke test for create/edit/publish/unpublish/delete/reorder;
+- [ ] confirm resulting changes in existing Ceritaria web/PWA without manual synchronization.
+
+### Reorder contract
+
+The reorder RPC accepts the complete ordered list of active episode IDs for one series. It validates authorization, membership, count, and duplicates, temporarily moves active rows outside the existing number range, then reassigns the original set of active `episode_number` values in the requested order.
+
+Preserving the existing number set avoids collisions with soft-deleted rows that still retain historical episode numbers under the unique `(series_id, episode_number)` constraint.
 
 ### Exit gate
 
-Changes made from Android appear correctly in Ceritaria web/PWA and existing CMS without manual synchronization.
+Code/build gate: **PASS after final reorder CI**. Production integration gate: **PENDING MIGRATION + CONFIGURATION**.
+
+Changes made from Android must still be smoke-tested against the real Supabase project and confirmed in Ceritaria web/PWA before Phase 3 receives a final green completion marker.
 
 ---
 
@@ -930,7 +949,7 @@ The remaining decisions belong to later implementation phases:
 3. exact R2 server endpoint names and response envelope;
 4. maximum accepted direct-upload video size;
 5. multipart threshold and part-size policy;
-6. conflict-safe episode reorder RPC/algorithm;
+6. production application and smoke verification for reorder migration `005_episode_reorder_rpc.sql`;
 7. whether a restore workflow should be added later;
 8. staging/test backend availability;
 9. minimum/target Android SDK and device support matrix.
