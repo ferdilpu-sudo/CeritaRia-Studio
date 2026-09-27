@@ -6,12 +6,16 @@ import org.junit.Test
 
 class SupabasePublicObjectPathTest {
     @Test
-    fun extractsObjectPathOnlyFromExpectedPublicBucket() {
+    fun extractsObjectPathOnlyFromExpectedProjectAndBucket() {
         val url = "https://project.supabase.co/storage/v1/object/public/series-media/owner/file.webp"
 
         assertEquals(
             "owner/file.webp",
-            publicObjectPathOrNull(url, "series-media"),
+            publicObjectPathOrNull(
+                publicUrl = url,
+                expectedBucket = "series-media",
+                expectedProjectUrl = "https://project.supabase.co",
+            ),
         )
     }
 
@@ -19,15 +23,37 @@ class SupabasePublicObjectPathTest {
     fun refusesDifferentBucket() {
         val url = "https://project.supabase.co/storage/v1/object/public/episode-media/owner/file.webp"
 
-        assertNull(publicObjectPathOrNull(url, "series-media"))
+        assertNull(
+            publicObjectPathOrNull(
+                publicUrl = url,
+                expectedBucket = "series-media",
+                expectedProjectUrl = "https://project.supabase.co",
+            ),
+        )
     }
 
     @Test
-    fun refusesExternalUrl() {
+    fun refusesLookalikePathOnExternalHost() {
+        val url = "https://evil.example/storage/v1/object/public/series-media/owner/file.webp"
+
         assertNull(
             publicObjectPathOrNull(
-                "https://images.example.com/cover.webp",
-                "series-media",
+                publicUrl = url,
+                expectedBucket = "series-media",
+                expectedProjectUrl = "https://project.supabase.co",
+            ),
+        )
+    }
+
+    @Test
+    fun refusesNonHttpsUrl() {
+        val url = "http://project.supabase.co/storage/v1/object/public/series-media/owner/file.webp"
+
+        assertNull(
+            publicObjectPathOrNull(
+                publicUrl = url,
+                expectedBucket = "series-media",
+                expectedProjectUrl = "https://project.supabase.co",
             ),
         )
     }

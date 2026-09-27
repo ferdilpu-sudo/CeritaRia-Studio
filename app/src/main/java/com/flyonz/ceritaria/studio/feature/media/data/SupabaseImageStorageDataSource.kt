@@ -1,5 +1,6 @@
 package com.flyonz.ceritaria.studio.feature.media.data
 
+import com.flyonz.ceritaria.studio.core.config.SupabaseConfig
 import com.flyonz.ceritaria.studio.core.network.SupabaseClientProvider
 import io.github.jan.supabase.storage.storage
 import io.github.jan.supabase.storage.upload
@@ -10,6 +11,7 @@ import javax.inject.Singleton
 @Singleton
 class SupabaseImageStorageDataSource @Inject constructor(
     private val clientProvider: SupabaseClientProvider,
+    private val config: SupabaseConfig,
 ) : ImageStorageDataSource {
     override suspend fun upload(
         bucket: String,
@@ -31,7 +33,11 @@ class SupabaseImageStorageDataSource @Inject constructor(
         expectedBucket: String,
         publicUrl: String?,
     ) {
-        val path = publicObjectPathOrNull(publicUrl, expectedBucket) ?: return
+        val path = publicObjectPathOrNull(
+            publicUrl = publicUrl,
+            expectedBucket = expectedBucket,
+            expectedProjectUrl = config.url,
+        ) ?: return
         deleteObject(expectedBucket, path)
     }
 
