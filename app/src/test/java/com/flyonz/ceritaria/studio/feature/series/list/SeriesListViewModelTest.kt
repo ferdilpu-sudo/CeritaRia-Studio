@@ -1,11 +1,13 @@
 package com.flyonz.ceritaria.studio.feature.series.list
 
+import com.flyonz.ceritaria.studio.core.error.AppError
 import com.flyonz.ceritaria.studio.core.error.AppResult
 import com.flyonz.ceritaria.studio.core.model.PagedResult
 import com.flyonz.ceritaria.studio.core.model.PublishStatus
 import com.flyonz.ceritaria.studio.feature.series.domain.Series
 import com.flyonz.ceritaria.studio.feature.series.domain.SeriesQuery
 import com.flyonz.ceritaria.studio.feature.series.domain.SeriesRepository
+import com.flyonz.ceritaria.studio.feature.series.domain.SeriesSaveCommand
 import com.flyonz.ceritaria.studio.testutil.MainDispatcherRule
 import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -69,6 +71,12 @@ class SeriesListViewModelTest {
 
         override suspend fun getSeriesById(id: String): AppResult<Series?> =
             AppResult.Success(series())
+
+        override suspend fun saveSeries(command: SeriesSaveCommand): AppResult<Series> =
+            AppResult.Failure(AppError.Unknown)
+
+        override suspend fun softDeleteSeries(id: String): AppResult<Unit> =
+            AppResult.Failure(AppError.Unknown)
 
         private fun series() = Series(
             id = "series-1",

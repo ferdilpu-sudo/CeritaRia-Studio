@@ -103,18 +103,36 @@ class SeriesRepositoryImplTest {
         override suspend fun createSeries(payload: SeriesWriteDto): SeriesRowDto {
             saveFailure?.let { throw it }
             createdPayload = payload
-            return payload.toRow()
+            return rowFromPayload(payload)
         }
 
         override suspend fun updateSeries(payload: SeriesWriteDto): SeriesRowDto {
             saveFailure?.let { throw it }
             updatedPayload = payload
-            return payload.toRow()
+            return rowFromPayload(payload)
         }
 
         override suspend fun softDeleteSeries(id: String) {
             deletedId = id
         }
+
+        private fun rowFromPayload(payload: SeriesWriteDto) = SeriesRowDto(
+            id = payload.id,
+            slug = payload.slug,
+            title = payload.title,
+            shortSynopsis = payload.shortSynopsis,
+            synopsis = payload.synopsis,
+            genres = payload.genres,
+            coverUrl = payload.coverUrl,
+            heroUrl = payload.heroUrl,
+            isFeatured = payload.isFeatured,
+            isPublished = payload.isPublished,
+            publishedAt = payload.publishedAt,
+            seoTitle = payload.seoTitle,
+            seoDescription = payload.seoDescription,
+            createdAt = "2026-09-01T00:00:00Z",
+            updatedAt = "2026-09-01T00:00:00Z",
+        )
     }
 
     private fun command(
@@ -135,24 +153,6 @@ class SeriesRepositoryImplTest {
         existingPublishedAt = publishedAt,
         seoTitle = null,
         seoDescription = null,
-    )
-
-    private fun SeriesWriteDto.toRow() = SeriesRowDto(
-        id = id,
-        slug = slug,
-        title = title,
-        shortSynopsis = shortSynopsis,
-        synopsis = synopsis,
-        genres = genres,
-        coverUrl = coverUrl,
-        heroUrl = heroUrl,
-        isFeatured = isFeatured,
-        isPublished = isPublished,
-        publishedAt = publishedAt,
-        seoTitle = seoTitle,
-        seoDescription = seoDescription,
-        createdAt = "2026-09-01T00:00:00Z",
-        updatedAt = "2026-09-01T00:00:00Z",
     )
 
     private fun row(id: String) = SeriesRowDto(
