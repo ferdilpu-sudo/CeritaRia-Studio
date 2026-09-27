@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Ceritaria Studio</string>
+    <string name="login_title">Masuk ke Ceritaria Studio</string>
+    <string name="login_subtitle">Gunakan akun admin Ceritaria yang sudah terdaftar.</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Password</string>
+    <string name="sign_in">Masuk</string>
+    <string name="sign_out">Keluar</string>
+    <string name="home">Home</string>
+    <string name="series">Series</string>
+    <string name="episodes">Episodes</string>
+    <string name="analytics">Analytics</string>
+    <string name="foundation_ready">Fondasi aplikasi aktif</string>
+    <string name="foundation_description">Auth, admin gate, navigation, Hilt, dan Supabase boundary sudah terpasang. Data katalog masuk pada Phase 2.</string>
+    <string name="configuration_required">Konfigurasi Supabase belum tersedia.</string>
+    <string name="configuration_hint">Isi CERITARIA_SUPABASE_URL dan CERITARIA_SUPABASE_PUBLISHABLE_KEY sebagai Gradle property atau environment variable.</string>
+    <string name="unauthorized_title">Akun bukan admin</string>
+    <string name="unauthorized_message">Akun berhasil masuk, tetapi tidak terdaftar pada admin_users.</string>
+    <string name="retry">Coba lagi</string>
+    <string name="generic_error">Terjadi masalah. Coba lagi.</string>
+    <string name="invalid_email">Masukkan email yang valid.</string>
+    <string name="invalid_password">Password minimal 6 karakter.</string>
+    <string name="login_failed">Tidak dapat masuk. Periksa email, password, dan koneksi.</string>
+    <string name="placeholder_phase2">Konten layar ini akan dihubungkan ke data produksi pada Phase 2.</string>
+</resources>
