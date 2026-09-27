@@ -77,7 +77,6 @@
     <string name="genres_comma_separated">Genre (pisahkan dengan koma)</string>
     <string name="story">Cerita</string>
     <string name="media_urls">Media</string>
-    <string name="media_upload_phase4_hint">Upload file akan ditambahkan pada Phase 4. Untuk sekarang URL media yang ada dapat dipertahankan atau diedit.</string>
     <string name="publishing_and_seo">Publikasi &amp; SEO</string>
     <string name="edit_series">Edit series</string>
     <string name="new_series">Series baru</string>
