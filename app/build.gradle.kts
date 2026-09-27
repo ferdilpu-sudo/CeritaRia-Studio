@@ -18,7 +18,7 @@ val supabaseKey = providers.gradleProperty("CERITARIA_SUPABASE_PUBLISHABLE_KEY")
 
 android {
     namespace = "com.flyonz.ceritaria.studio"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.flyonz.ceritaria.studio"

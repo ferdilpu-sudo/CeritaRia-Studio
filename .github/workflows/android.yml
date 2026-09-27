@@ -17,11 +17,11 @@ jobs:
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "9.1.0"
-      - name: Install Android SDK 36
+          gradle-version: "9.3.1"
+      - name: Install Android SDK 37
         shell: bash
         run: |
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
+          "$SDKMANAGER" "platforms;android-37" "build-tools;36.0.0"
       - name: Verify
         run: gradle lintDebug testDebugUnitTest assembleDebug --stacktrace

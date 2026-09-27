@@ -10,12 +10,16 @@ Native Android administration app for Ceritaria.
 ## Toolchain
 
 - JDK 17
-- Android SDK 36
+- compileSdk 37
 - minSdk 26
 - targetSdk 36
+- Android Gradle Plugin 9.1.1
+- Gradle 9.3.1
 - Jetpack Compose
 - Hilt
 - Supabase Kotlin
+
+`compileSdk` is intentionally newer than `targetSdk`: current Compose artifacts require API 37 for compilation, while runtime target behavior remains API 36.
 
 ## Local configuration
 
@@ -30,10 +34,10 @@ Do not commit service-role keys, R2 secrets, or signing credentials.
 
 ## Build
 
-With Gradle 9.1 available:
+With Gradle 9.3.1 available:
 
 ```bash
 gradle lintDebug testDebugUnitTest assembleDebug
 ```
 
-The repository CI installs Gradle 9.1 explicitly, so it does not depend on a machine-wide Gradle version.
+The repository CI installs Gradle 9.3.1 explicitly, so it does not depend on a machine-wide Gradle version.
