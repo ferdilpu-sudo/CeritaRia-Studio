@@ -60,7 +60,7 @@ class VideoUploadRepositoryImplTest {
         val state = MultipartUploadState(
             partSizeBytes = 5_000_000,
             partCount = 2,
-            completedParts = listOf(CompletedVideoPart(1, ""etag-old"")),
+            completedParts = listOf(CompletedVideoPart(1, "etag-old")),
         )
         val jobs = FakeJobs(
             job(sizeBytes = 8_000_000).copy(
@@ -170,7 +170,7 @@ class VideoUploadRepositoryImplTest {
             FinalizedVideoAsset(
                 assetId = if (sessionId == "session-old") "asset-old" else "asset-ready",
                 sizeBytes = 8_000_000,
-                etag = ""final"",
+                etag = "final",
             )
 
         override suspend fun cancelUpload(sessionId: String) = Unit
@@ -192,7 +192,7 @@ class VideoUploadRepositoryImplTest {
         ): R2PutResult {
             ranges += offsetBytes to lengthBytes
             onProgress(lengthBytes)
-            return R2PutResult(etag = ""etag-" + ranges.size + """)
+            return R2PutResult(etag = "etag-" + ranges.size)
         }
     }
 

@@ -13,8 +13,8 @@ class MultipartUploadStateCodecTest {
             partSizeBytes = 16_777_216,
             partCount = 3,
             completedParts = listOf(
-                CompletedVideoPart(1, ""etag-one""),
-                CompletedVideoPart(2, ""etag-two""),
+                CompletedVideoPart(1, "etag-one"),
+                CompletedVideoPart(2, "etag-two"),
             ),
         )
 
@@ -23,6 +23,6 @@ class MultipartUploadStateCodecTest {
 
     @Test
     fun invalidPersistedStateReturnsNull() {
-        assertNull(codec.decode("{"partSizeBytes":0,"partCount":2}"))
+        assertNull(codec.decode("""{"partSizeBytes":0,"partCount":2}"""))
     }
 }
