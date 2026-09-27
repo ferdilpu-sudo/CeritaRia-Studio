@@ -1,270 +1,571 @@
-# Ceritaria Studio Android --- Data Contract & Schema Plan
+# Ceritaria Studio Android — Verified Data Contract
 
-## 1. Purpose
+Status: **Phase 0 verified against production repository**  
+Audit date: **2026-09-27**  
+Source repository: `ferdilpu-sudo/ceritaria` branch `main`  
+Audited tree SHA: `c7ea336224a5baaf37af3645ff375981051a8b31`
 
-This document is the Android-facing data contract.
+This document is the Android-facing data contract for the current Ceritaria production schema.
 
-Important: exact production table/column definitions must be verified
-against the current Ceritaria Supabase migrations before implementation.
-The public repository confirms that Ceritaria uses Supabase
-Postgres/Auth/Storage/RLS, soft delete, series/episodes, admin users,
-YouTube-first video provider support, and first-party analytics. This
-document intentionally does not fabricate exact column names that have
-not been verified.
+Do not invent fields that are not listed as VERIFIED. Future R2 structures remain PROPOSED until a production migration exists.
 
-Legend: - **VERIFIED-CONCEPT**: confirmed as a capability/entity by
-current repository documentation. - **VERIFY-FIELD**: exact production
-column/type must be read from migration. - **PROPOSED**: future schema,
-not safe to assume exists.
+---
 
-## 2. Existing entity map
+## 1. Contract status legend
 
-``` text
+- **VERIFIED** — present in audited production migrations/code.
+- **VERIFIED-BEHAVIOR** — behavior confirmed from current CMS/public code.
+- **PROPOSED** — required by the Studio roadmap but not present in production yet.
+- **UNSUPPORTED** — not implemented by the current production contract.
+
+---
+
+## 2. Entity map
+
+```text
 auth.users
     |
-    | 1:0..1 authorization mapping
+    | 1 : 0..1
     v
 admin_users
 
 series
     |
-    | 1:N
+    | 1 : N
     v
 episodes
 
-series/episodes
-    |
-    +--> image references --> Supabase Storage
+series --------> series-media bucket
+episodes ------> episode-media bucket
 
-analytics events/pageviews/visitors
+analytics_events
     ^
     |
-public Ceritaria web
+track_analytics_event RPC
+
+admin dashboard
+    |
+    v
+get_analytics_dashboard RPC
 ```
+
+There is currently no production `video_assets` table.
+
+---
 
 ## 3. Admin authorization
 
-### `auth.users`
+Status: **VERIFIED**
 
-Status: VERIFIED-CONCEPT
+### auth.users
 
-Supabase Auth identity. Android authenticates as a normal user session.
+Supabase Auth owns identity/session.
 
-### `admin_users`
+Android authenticates as a normal user. A service-role credential is never needed by the APK.
 
-Status: VERIFIED-CONCEPT
+### public.admin_users
 
-Purpose: identifies users allowed to operate the CMS/admin surface.
+Exact schema:
 
-Android rule: - authentication alone is insufficient; - authorization
-must match production policy; - RLS remains authoritative.
+```sql
+user_id    uuid primary key references auth.users(id) on delete cascade
+created_at timestamptz not null default now()
+```
 
-Fields to verify: - primary/user UUID; - role/status if any; -
-timestamps.
+There is currently no admin role/status column.
 
-## 4. Series
+### is_admin()
 
-Status: VERIFIED-CONCEPT
+Production function:
 
-Required domain representation:
+```text
+public.is_admin()
+-> true when auth.uid() exists in public.admin_users
+```
 
-``` kotlin
+The function is executable by authenticated users.
+
+### Android authorization flow
+
+```text
+Supabase sign-in
+ -> valid user session
+ -> query own admin_users membership
+ -> RLS remains authoritative
+ -> enter Studio only when membership exists
+```
+
+UI hiding is not authorization.
+
+---
+
+## 4. Series table
+
+Status: **VERIFIED**
+
+Table: `public.series`
+
+| Field | Production type | Null | Notes |
+|---|---|---:|---|
+| id | uuid | no | PK, default `gen_random_uuid()` |
+| slug | varchar(160) | no | unique |
+| title | varchar(200) | no | |
+| short_synopsis | varchar(320) | yes | |
+| synopsis | text | yes | |
+| genres | text[] | no | default empty array |
+| cover_url | text | yes | currently stores public URL |
+| hero_url | text | yes | currently stores public URL |
+| is_featured | boolean | no | default false |
+| is_published | boolean | no | default false |
+| published_at | timestamptz | yes | required when published |
+| seo_title | varchar(200) | yes | |
+| seo_description | varchar(320) | yes | |
+| created_at | timestamptz | no | default now |
+| updated_at | timestamptz | no | trigger-maintained |
+| deleted_at | timestamptz | yes | soft delete |
+
+Constraint:
+
+```text
+is_published = false OR published_at IS NOT NULL
+```
+
+Indexes:
+
+- public feed: `published_at desc` where published and not deleted;
+- featured feed: `(is_featured, published_at desc)` where published and not deleted.
+
+### Series validation
+
+Status: **VERIFIED-BEHAVIOR**
+
+Current CMS validation:
+
+- slug: lowercase kebab-case, length 2..160;
+- title: length 2..200;
+- short synopsis: max 320;
+- synopsis: max 8000;
+- genre form input: max 400 chars, converted to max 12 items;
+- SEO title: max 200;
+- SEO description: max 320.
+
+---
+
+## 5. Episodes table
+
+Status: **VERIFIED**
+
+Table: `public.episodes`
+
+| Field | Production type | Null | Notes |
+|---|---|---:|---|
+| id | uuid | no | PK, default `gen_random_uuid()` |
+| series_id | uuid | no | FK -> series(id), cascade |
+| episode_number | integer | no | > 0 |
+| slug | varchar(160) | no | unique within series |
+| title | varchar(200) | no | |
+| short_synopsis | varchar(320) | yes | |
+| recap | text | yes | |
+| highlights | text[] | no | default empty array |
+| video_provider | varchar(30) | no | default `youtube` |
+| video_url | text | no | |
+| thumbnail_url | text | yes | currently stores public URL |
+| duration_seconds | integer | yes | > 0 when present |
+| is_published | boolean | no | default false |
+| published_at | timestamptz | yes | required when published |
+| seo_title | varchar(200) | yes | |
+| seo_description | varchar(320) | yes | |
+| created_at | timestamptz | no | default now |
+| updated_at | timestamptz | no | trigger-maintained |
+| deleted_at | timestamptz | yes | soft delete |
+
+Unique constraints:
+
+```text
+(series_id, episode_number)
+(series_id, slug)
+```
+
+Provider constraint after migration 002:
+
+```text
+video_provider IN ('youtube', 'facebook')
+```
+
+Therefore current production cannot accept `r2` as a provider value.
+
+### Episode validation
+
+Status: **VERIFIED-BEHAVIOR**
+
+Current CMS validation:
+
+- series id: UUID;
+- episode number: positive integer, max 10000;
+- slug: lowercase kebab-case, length 2..160;
+- title: length 2..200;
+- short synopsis: max 320;
+- recap: max 20000;
+- highlights form: max 4000 chars, converted to max 12 non-empty lines;
+- provider: `youtube` or `facebook`;
+- video URL: required, max 2048, provider-specific validation;
+- duration: positive integer, max 86400 seconds;
+- SEO title: max 200;
+- SEO description: max 320.
+
+---
+
+## 6. Android domain models
+
+These models map directly to verified production fields.
+
+```kotlin
 data class Series(
     val id: String,
-    val title: String,
     val slug: String,
+    val title: String,
+    val shortSynopsis: String?,
     val synopsis: String?,
+    val genres: List<String>,
     val coverUrl: String?,
     val heroUrl: String?,
-    val status: PublishStatus,
     val isFeatured: Boolean,
-    val createdAt: Instant?,
-    val updatedAt: Instant?,
+    val publishStatus: PublishStatus,
     val publishedAt: Instant?,
-    val deletedAt: Instant?
+    val seoTitle: String?,
+    val seoDescription: String?,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+    val deletedAt: Instant?,
 )
 ```
 
-This is a domain target, not proof of production field names.
-
-Verify from migration: - ID type; - title/slug fields; -
-description/synopsis naming; - cover/hero storage fields; -
-draft/publish representation; - featured field; - SEO fields; -
-ordering; - created/updated/published timestamps; - soft-delete field.
-
-Constraints Android must respect: - slug uniqueness if enforced; -
-required title; - publish requirements; - soft delete semantics.
-
-## 5. Episodes
-
-Status: VERIFIED-CONCEPT
-
-Required domain representation:
-
-``` kotlin
+```kotlin
 data class Episode(
     val id: String,
     val seriesId: String,
-    val episodeNumber: Int?,
-    val sortOrder: Int?,
-    val title: String,
+    val episodeNumber: Int,
     val slug: String,
-    val description: String?,
+    val title: String,
+    val shortSynopsis: String?,
     val recap: String?,
-    val importantMoments: String?,
-    val thumbnailUrl: String?,
+    val highlights: List<String>,
     val videoProvider: VideoProvider,
-    val videoReference: String,
-    val status: PublishStatus,
-    val createdAt: Instant?,
-    val updatedAt: Instant?,
+    val videoUrl: String,
+    val thumbnailUrl: String?,
+    val durationSeconds: Int?,
+    val publishStatus: PublishStatus,
     val publishedAt: Instant?,
-    val deletedAt: Instant?
+    val seoTitle: String?,
+    val seoDescription: String?,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+    val deletedAt: Instant?,
 )
 ```
 
-Verify exact persistence for: - relation to series; - episode number vs
-sort order; - title/slug; - description; - recap; - important moments; -
-thumbnail; - video URL/provider ID; - `video_provider` representation; -
-publish state; - SEO; - soft delete.
+Android DTOs must preserve production names. Mapping into domain models is explicit.
 
-### Provider enum
+---
 
-Repository documentation confirms: - YouTube is primary for new
-content. - Facebook remains for legacy rows.
+## 7. Publish state
 
-Android domain:
+Status: **VERIFIED-BEHAVIOR**
 
-``` text
-YOUTUBE
-FACEBOOK
-UNKNOWN
-```
+The database stores `is_published`, `published_at`, and `deleted_at`.
 
-Do not crash on unknown future database value. Preserve/read unknown
-values safely and block destructive overwrite until understood.
+Current CMS preserves an existing `published_at` timestamp when content is unpublished.
 
-## 6. Publish state
+Android may safely map:
 
-Status: VERIFIED-CONCEPT that draft/publish exists; exact representation
-must be verified.
-
-Android domain:
-
-``` text
+```text
 DRAFT
+  deleted_at == null
+  is_published == false
+  published_at == null
+
 PUBLISHED
-UNPUBLISHED (only if backend supports distinct state)
+  deleted_at == null
+  is_published == true
+  published_at != null
+
+UNPUBLISHED
+  deleted_at == null
+  is_published == false
+  published_at != null
+
 DELETED
+  deleted_at != null
 ```
 
-Do not infer state from nullable dates until the production
-implementation is inspected.
+Public visibility additionally requires:
 
-## 7. Soft delete
-
-Status: VERIFIED-CONCEPT
-
-Rules: - normal Android delete calls production soft-delete behavior; -
-queries hide deleted rows by default unless a Trash/restore feature is
-explicitly implemented; - no normal UI hard delete.
-
-Verify: - field name/type; - RLS visibility; - restore behavior; -
-cascade behavior for series with episodes.
-
-## 8. Storage
-
-Status: VERIFIED-CONCEPT
-
-Current web CMS supports cover/hero/thumbnail upload via Supabase-backed
-media.
-
-Verify: - bucket names; - public/private bucket policy; - path
-convention; - max sizes; - accepted MIME types; - whether DB stores full
-URL or object path.
-
-Android must reuse the same convention.
-
-Preferred domain object:
-
-``` text
-MediaRef
-- bucket
-- objectPath
-- publicUrl? (derived where possible)
+```text
+is_published = true
+published_at <= now()
+deleted_at IS NULL
 ```
 
-Do not permanently couple domain logic to a hardcoded Supabase public
-URL.
+A published episode is only public when its parent series is also public.
 
-## 9. Analytics
+---
 
-Status: VERIFIED-CONCEPT
+## 8. Soft delete and restore
 
-Repository documentation confirms first-party: - realtime visitor; -
-pageview; - unique visitor; - top pages; - device; - referrer; - player
-events.
+### Series delete
 
-Android initial release needs read-only aggregate access.
+Status: **VERIFIED**
 
-Verify actual tables/views/RPCs before implementation. Prefer existing
-safe views/RPCs over downloading raw analytics events to the phone.
+Use production RPC:
 
-## 10. Relationships
-
-``` text
-Series 1 ----- N Episode
-
-AuthUser 1 --- 0..1 AdminUser
-
-Series/Episode ---- media object references
-
-Episode.videoProvider + Episode.videoReference
-    -> external or direct-upload video source according to the verified provider contract
+```text
+soft_delete_series(target_id uuid)
 ```
 
-## 11. Android DTO policy
+It:
 
-DTO names reflect database contracts:
+1. soft-deletes all active child episodes;
+2. sets child `is_published = false`;
+3. soft-deletes the series;
+4. sets series `is_published = false`.
 
-``` text
-SeriesRowDto
-EpisodeRowDto
-AdminUserRowDto
-AnalyticsSummaryDto
+### Episode delete
+
+Status: **VERIFIED-BEHAVIOR**
+
+Current CMS directly updates:
+
+```text
+deleted_at = now()
+is_published = false
 ```
 
-Mapping is explicit:
+### Restore
 
-``` text
-Supabase row
- -> DTO
- -> mapper
- -> domain
- -> ViewModel UI state
+Status: **UNSUPPORTED**
+
+The audited CMS has no restore action/RPC and admin list queries hide deleted rows.
+
+Android must not expose Restore until a production restore contract is deliberately added.
+
+---
+
+## 9. Episode ordering
+
+Status: **PARTIALLY VERIFIED**
+
+Ordering currently uses `episode_number`.
+
+The unique constraint `(series_id, episode_number)` prevents duplicates.
+
+There is no dedicated production reorder RPC in the audited repository.
+
+Android may edit one episode number using existing semantics, but a drag-and-drop multi-row reorder must remain disabled until a conflict-safe server/RPC strategy is implemented and verified.
+
+---
+
+## 10. RLS policies
+
+Status: **VERIFIED**
+
+### admin_users
+
+Authenticated users may select only their own membership row.
+
+### series
+
+Public/authorized readers may select only rows satisfying:
+
+```text
+is_published = true
+published_at <= now()
+deleted_at IS NULL
 ```
 
-No `Map<String, Any>` beyond a narrow adapter boundary.
+Authenticated admins have full series access through `public.is_admin()`.
 
-## 12. Core delivery extension: direct uploaded video
+### episodes
 
-Status: CORE DELIVERY CAPABILITY; PRODUCTION MIGRATION MAY BE REQUIRED BEFORE R2 VIDEO SHIPS
+Public/authorized readers may select only rows satisfying:
 
-The existing production migration must be audited first. If the current
-episode schema cannot safely represent R2 assets, add an explicit
-backward-compatible migration rather than overloading YouTube/Facebook
-fields.
+```text
+episode.is_published = true
+episode.published_at <= now()
+episode.deleted_at IS NULL
+parent series is also published, visible, and not deleted
+```
 
-Prefer a separate media/upload entity rather than stuffing transient
-upload state into `episodes`.
+Authenticated admins have full episode access through `public.is_admin()`.
 
-Conceptual:
+Android writes therefore remain protected by database policy even if a UI check fails.
 
-``` text
+---
+
+## 11. Supabase Storage
+
+Status: **VERIFIED**
+
+Buckets:
+
+```text
+series-media
+episode-media
+```
+
+Both buckets are public.
+
+Limits:
+
+```text
+max size = 5 MiB
+allowed MIME =
+  image/jpeg
+  image/png
+  image/webp
+```
+
+Authenticated admin policies permit INSERT/UPDATE/DELETE in these buckets when `public.is_admin()` is true.
+
+Current CMS upload path:
+
+```text
+{ownerId}/{randomUUID}.{extension}
+```
+
+Current DB fields store the generated public URL.
+
+Android Phase 4 must match this production behavior unless the storage contract is deliberately migrated first.
+
+---
+
+## 12. Video providers
+
+Status: **VERIFIED**
+
+Current production provider values:
+
+```text
+youtube
+facebook
+```
+
+New web CMS episodes default to `youtube`.
+
+Facebook remains valid for legacy/editable rows.
+
+Android domain should still include an UNKNOWN fallback for forward-compatible reads, but UNKNOWN is never written back without understanding the value.
+
+R2 is not currently a valid production provider.
+
+---
+
+## 13. Analytics
+
+Status: **VERIFIED**
+
+Table: `public.analytics_events`
+
+Core fields:
+
+- `id uuid`
+- `visitor_id uuid`
+- `session_id uuid`
+- `event_name varchar(80)`
+- `path varchar(512)`
+- `referrer_host varchar(255)`
+- `device_type varchar(20)`
+- `metadata jsonb`
+- `created_at timestamptz`
+
+Device constraint:
+
+```text
+mobile | tablet | desktop | unknown
+```
+
+Metadata serialized size is limited to 2048 bytes.
+
+Direct public INSERT/UPDATE/DELETE is revoked.
+
+### Event write RPC
+
+```text
+track_analytics_event(...)
+```
+
+Accepted events:
+
+- `page_view`
+- `episode_view`
+- `play_intent`
+- `next_episode_click`
+- `previous_episode_click`
+- `facebook_fallback_click`
+- `youtube_fallback_click`
+
+### Admin dashboard RPC
+
+```text
+get_analytics_dashboard(
+  p_days integer default 7,
+  p_timezone text default 'Asia/Jakarta'
+)
+```
+
+The function clamps the requested period to 1..90 days and requires admin authorization.
+
+Current web uses 7/30/90 day options.
+
+Returned data includes:
+
+- summary;
+- 24-hour hourly pageviews/visitors;
+- top pages;
+- devices;
+- referrers;
+- event totals.
+
+Realtime visitors are supplied separately by Supabase Realtime Presence.
+
+Android analytics should consume the aggregate RPC instead of downloading raw event history.
+
+---
+
+## 14. Current server API surface relevant to Studio
+
+Status: **VERIFIED**
+
+The audited Next.js application currently exposes an API health route:
+
+```text
+GET /api/health
+```
+
+No R2/video upload API routes exist in the audited tree.
+
+Content CRUD in the web CMS currently uses server actions backed by the normal authenticated Supabase client.
+
+---
+
+## 15. R2 production extension
+
+Status: **PROPOSED — MIGRATION + SERVER CONTRACT REQUIRED**
+
+Phase 0 confirmed that production does **not** currently contain:
+
+- a `video_assets` table;
+- an R2 provider value;
+- an upload-session table;
+- R2 upload/finalization endpoints.
+
+At minimum, production must be extended before R2 video ships.
+
+Preferred direction:
+
+```text
 video_assets
 - id
 - episode_id
-- provider = R2
 - object_key
 - mime_type
 - size_bytes
@@ -273,54 +574,34 @@ video_assets
 - processing_status
 - created_at
 - verified_at
+- replaced_at?
 ```
 
-Possible statuses:
+Exact SQL is intentionally deferred until the playback/delivery URL contract and final server API are designed.
 
-``` text
-PENDING
-UPLOADING
-UPLOADED
-VERIFYING
-READY
-FAILED
-REPLACED
+Required server capabilities:
+
+```text
+create upload session
+authorize/initiate single or multipart transfer
+complete multipart transfer
+verify object
+mark asset READY
+cancel/abort incomplete upload
+atomically attach/replace READY episode media
 ```
 
-Episode should reference only a READY asset when published.
+Permanent R2 credentials remain server-side.
 
-The final SQL must be designed only after the current production schema
-and delivery/player strategy are verified.
+---
 
-## 13. Schema verification checklist
+## 16. Local Android VideoJob
 
-Before Android persistence code: - \[ \] read all current
-`supabase/migrations/*` in order; - \[ \] record exact `series`
-schema; - \[ \] record exact `episodes` schema; - \[ \] record
-`admin_users`; - \[ \] record analytics tables/views/RPCs; - \[ \]
-record RLS policies; - \[ \] record storage buckets/policies; - \[ \]
-inspect web CMS create/update/delete actions; - \[ \] inspect TypeScript
-database types; - \[ \] reconcile this document; - \[ \] mark exact
-fields VERIFIED.
+Status: **ANDROID-LOCAL CONTRACT**
 
-## 14. Compatibility rule
+This belongs in Room, not in production catalog tables.
 
-If Android needs a field not present in production: 1. do not invent it
-client-side; 2. propose a migration; 3. verify old web code tolerates
-it; 4. deploy backend migration first; 5. update web/types if needed; 6.
-then release Android dependency.
-
-This ordering prevents the thrilling experience of discovering that the
-mobile app and production website have developed separate
-interpretations of reality.
-
-## 15. Local Android video job model
-
-This is an Android persistence/state model, not a duplicate catalog table in Supabase.
-Room is required as the durable operational store for this state.
-Series and episode production content remain authoritative in Supabase.
-
-``` text
+```text
 VideoJob
 - jobId
 - episodeId?
@@ -342,9 +623,9 @@ VideoJob
 - updatedAt
 ```
 
-Encoding state:
+Encoding states:
 
-``` text
+```text
 NOT_REQUIRED
 QUEUED
 ENCODING
@@ -353,9 +634,9 @@ FAILED
 CANCELLED
 ```
 
-Upload state:
+Upload states:
 
-``` text
+```text
 NOT_STARTED
 QUEUED
 UPLOADING
@@ -365,52 +646,43 @@ FAILED
 CANCELLED
 ```
 
-Encoding READY does not imply upload READY. Upload READY does not
-automatically imply episode PUBLISHED.
+Encoding READY does not imply upload READY.
 
+Upload READY does not imply episode PUBLISHED.
 
-## 16. Server upload-session contract
+---
 
-The trusted Ceritaria server owns privileged R2 authorization and canonical object naming.
-The exact persistence implementation is verified during Phase 0 and must not be invented by Android.
+## 17. Phase 0 verification checklist
 
-Conceptual server-facing state:
+- [x] read all current `supabase/migrations/*` in order;
+- [x] record exact `series` schema;
+- [x] record exact `episodes` schema;
+- [x] record exact `admin_users` schema;
+- [x] verify publish behavior from CMS actions;
+- [x] verify soft-delete behavior;
+- [x] inspect RLS policies;
+- [x] inspect storage buckets/policies;
+- [x] inspect CMS create/update/delete actions;
+- [x] inspect TypeScript database types;
+- [x] verify YouTube/Facebook provider representation;
+- [x] inspect analytics table/RPCs;
+- [x] inspect current API route surface;
+- [x] determine R2 migration requirement;
+- [x] reconcile Android-facing schema documentation.
 
-``` text
-UploadSession
-- id
-- assetId
-- objectKey
-- mode = SINGLE_PUT | MULTIPART
-- expiresAt
-- expectedMimeType
-- expectedSizeBytes?
-- multipartUploadId?
-- status
-```
+Phase 0 schema exit gate: **PASS**.
 
-Rules:
-- authorization is short-lived and scoped;
-- permanent R2 credentials are never returned to Android;
-- multipart part identifiers/ETags required for resume are persisted locally in `VideoJob.multipartState`;
-- upload completion is not equivalent to media verification;
-- only a verified READY asset may replace the episode's active production video.
+---
 
-## 17. R2 object naming
+## 18. Compatibility rule
 
-Final convention must be server-controlled.
+If Android needs a production field or behavior not documented as VERIFIED:
 
-Conceptual example:
+1. do not invent it client-side;
+2. propose the backend/schema change;
+3. verify existing web compatibility;
+4. deploy the backend/migration first;
+5. update shared documentation/types;
+6. only then ship the Android dependency.
 
-``` text
-video/{seriesId}/{episodeId}/{assetId}/stream.mp4
-```
-
-Do not trust a user-entered filename as the canonical object key.
-
-The server should generate/validate: - bucket; - object key; - permitted
-MIME type; - expected maximum size; - expiration of upload
-authorization.
-
-Android receives temporary upload authorization, not permanent R2
-credentials.
+This is less exciting than debugging two conflicting realities in production, which is precisely the point.
