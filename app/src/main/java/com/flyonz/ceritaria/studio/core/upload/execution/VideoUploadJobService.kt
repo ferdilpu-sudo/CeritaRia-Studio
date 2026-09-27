@@ -6,6 +6,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.flyonz.ceritaria.studio.core.coroutines.IoDispatcher
 import com.flyonz.ceritaria.studio.core.coroutines.MainDispatcher
+import com.flyonz.ceritaria.studio.core.database.videojob.VideoJobRepository
 import com.flyonz.ceritaria.studio.core.upload.VideoUploadRepository
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.concurrent.ConcurrentHashMap
@@ -24,6 +25,9 @@ import kotlinx.coroutines.withContext
 class VideoUploadJobService : JobService() {
     @Inject
     lateinit var repository: VideoUploadRepository
+
+    @Inject
+    lateinit var jobs: VideoJobRepository
 
     @Inject
     lateinit var notificationFactory: VideoUploadNotificationFactory
@@ -73,7 +77,12 @@ class VideoUploadJobService : JobService() {
             } catch (error: CancellationException) {
                 throw error
             } catch (_: Throwable) {
-                finish(params, wantsReschedule = true)
+                val errorCode = jobs.getById(jobId)?.lastErrorCode
+                finish(
+                    params,
+                    wantsReschedule = errorCode == null ||
+                        VideoUploadRetryPolicy.isRetryable(errorCode),
+                )
             }
         }
         runningJobs[params.jobId] = running
