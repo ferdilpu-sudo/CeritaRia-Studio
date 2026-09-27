@@ -22,4 +22,16 @@ abstract class MediaModule {
     abstract fun bindVideoSourceAccess(
         implementation: AndroidVideoSourceAccess,
     ): VideoSourceAccess
+
+    @Binds
+    @Singleton
+    abstract fun bindVideoEncoder(
+        implementation: Media3VideoEncoder,
+    ): VideoEncoder
+
+    @Binds
+    @Singleton
+    abstract fun bindTemporaryMediaStore(
+        implementation: AndroidTemporaryMediaStore,
+    ): TemporaryMediaStore
 }
