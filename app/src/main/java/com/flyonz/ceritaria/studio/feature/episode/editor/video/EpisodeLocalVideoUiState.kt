@@ -16,6 +16,12 @@ enum class EpisodeLocalVideoStatus {
     READY_TO_ENCODE,
     ENCODING,
     ENCODED_READY,
+    UPLOAD_QUEUED,
+    UPLOADING,
+    VERIFYING,
+    UPLOAD_READY,
+    UPLOAD_FAILED,
+    UPLOAD_CANCELLED,
     FAILED,
     CANCELLED,
 }

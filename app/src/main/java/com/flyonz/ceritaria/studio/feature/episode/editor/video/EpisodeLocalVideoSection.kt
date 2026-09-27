@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.flyonz.ceritaria.studio.R
+import com.flyonz.ceritaria.studio.core.media.VideoEncodingStatus
 import com.flyonz.ceritaria.studio.core.media.VideoMetadata
 import java.util.Locale
 
@@ -25,14 +26,18 @@ fun EpisodeLocalVideoSection(
     onSelected: (String) -> Unit,
     onPrepare: () -> Unit,
     onCancel: () -> Unit,
+    onUpload: () -> Unit,
+    onCancelUpload: () -> Unit,
 ) {
     val picker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
     ) { uri ->
         uri?.toString()?.let(onSelected)
     }
+    val transferLocked = state.status in TRANSFER_LOCKED_STATUSES
     val isBusy = state.status == EpisodeLocalVideoStatus.INSPECTING ||
-        state.status == EpisodeLocalVideoStatus.ENCODING
+        state.status == EpisodeLocalVideoStatus.ENCODING ||
+        transferLocked
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.local_video), style = MaterialTheme.typography.titleMedium)
@@ -90,6 +95,34 @@ fun EpisodeLocalVideoSection(
                 Text(stringResource(R.string.cancel_encoding))
             }
         }
+
+        if (state.canUpload()) {
+            Button(onClick = onUpload, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    stringResource(
+                        if (state.status == EpisodeLocalVideoStatus.UPLOAD_FAILED ||
+                            state.status == EpisodeLocalVideoStatus.UPLOAD_CANCELLED
+                        ) {
+                            R.string.retry_video_upload
+                        } else {
+                            R.string.upload_video
+                        },
+                    ),
+                )
+            }
+        }
+
+        if (state.status == EpisodeLocalVideoStatus.UPLOAD_QUEUED ||
+            state.status == EpisodeLocalVideoStatus.UPLOADING ||
+            state.status == EpisodeLocalVideoStatus.UPLOAD_FAILED
+        ) {
+            OutlinedButton(
+                onClick = onCancelUpload,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.cancel_video_upload))
+            }
+        }
     }
 }
 
@@ -103,16 +136,41 @@ private fun LocalVideoStatus(state: EpisodeLocalVideoUiState) {
             Text(stringResource(R.string.local_video_ready_direct))
         EpisodeLocalVideoStatus.READY_TO_ENCODE ->
             Text(stringResource(R.string.local_video_ready_encode))
-        EpisodeLocalVideoStatus.ENCODING -> {
-            val progress = state.job?.encodingProgress ?: 0
-            LinearProgressIndicator(
-                progress = { progress.coerceIn(0, 100) / 100f },
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Text(stringResource(R.string.local_video_encoding, progress))
-        }
+        EpisodeLocalVideoStatus.ENCODING -> ProgressStatus(
+            progress = state.job?.encodingProgress ?: 0,
+            label = R.string.local_video_encoding,
+        )
         EpisodeLocalVideoStatus.ENCODED_READY ->
             Text(stringResource(R.string.local_video_encoded_ready))
+        EpisodeLocalVideoStatus.UPLOAD_QUEUED ->
+            Text(stringResource(R.string.video_upload_queued))
+        EpisodeLocalVideoStatus.UPLOADING -> {
+            val job = state.job
+            val percent = if (job != null && job.totalBytes > 0L) {
+                ((job.uploadedBytes * 100L) / job.totalBytes).toInt().coerceIn(0, 100)
+            } else {
+                0
+            }
+            ProgressStatus(percent, R.string.video_upload_progress_local)
+        }
+        EpisodeLocalVideoStatus.VERIFYING ->
+            Text(stringResource(R.string.video_upload_verifying))
+        EpisodeLocalVideoStatus.UPLOAD_READY -> Text(
+            stringResource(
+                R.string.video_upload_ready,
+                state.job?.remoteAssetId ?: "?",
+            ),
+            color = MaterialTheme.colorScheme.primary,
+        )
+        EpisodeLocalVideoStatus.UPLOAD_FAILED -> Text(
+            stringResource(
+                R.string.video_upload_failed_local,
+                state.errorCode ?: "UNKNOWN",
+            ),
+            color = MaterialTheme.colorScheme.error,
+        )
+        EpisodeLocalVideoStatus.UPLOAD_CANCELLED ->
+            Text(stringResource(R.string.video_upload_cancelled_local))
         EpisodeLocalVideoStatus.FAILED -> Text(
             text = stringResource(
                 R.string.local_video_failed,
@@ -123,6 +181,25 @@ private fun LocalVideoStatus(state: EpisodeLocalVideoUiState) {
         EpisodeLocalVideoStatus.CANCELLED ->
             Text(stringResource(R.string.local_video_cancelled))
     }
+}
+
+@Composable
+private fun ProgressStatus(
+    progress: Int,
+    label: Int,
+) {
+    LinearProgressIndicator(
+        progress = { progress.coerceIn(0, 100) / 100f },
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Text(stringResource(label, progress))
+}
+
+private fun EpisodeLocalVideoUiState.canUpload(): Boolean {
+    val current = job ?: return false
+    val sourceReady = !current.needsEncoding ||
+        current.encodingStatus == VideoEncodingStatus.READY
+    return sourceReady && status in UPLOAD_ACTION_STATUSES
 }
 
 private fun metadataSummary(metadata: VideoMetadata): String {
@@ -151,3 +228,18 @@ private fun formatBytes(bytes: Long): String = when {
         "%.1f MB".format(Locale.US, bytes / (1024.0 * 1024.0))
     else -> "%.1f KB".format(Locale.US, bytes / 1024.0)
 }
+
+private val TRANSFER_LOCKED_STATUSES = setOf(
+    EpisodeLocalVideoStatus.UPLOAD_QUEUED,
+    EpisodeLocalVideoStatus.UPLOADING,
+    EpisodeLocalVideoStatus.VERIFYING,
+    EpisodeLocalVideoStatus.UPLOAD_READY,
+    EpisodeLocalVideoStatus.UPLOAD_FAILED,
+)
+
+private val UPLOAD_ACTION_STATUSES = setOf(
+    EpisodeLocalVideoStatus.READY_WITHOUT_ENCODING,
+    EpisodeLocalVideoStatus.ENCODED_READY,
+    EpisodeLocalVideoStatus.UPLOAD_FAILED,
+    EpisodeLocalVideoStatus.UPLOAD_CANCELLED,
+)

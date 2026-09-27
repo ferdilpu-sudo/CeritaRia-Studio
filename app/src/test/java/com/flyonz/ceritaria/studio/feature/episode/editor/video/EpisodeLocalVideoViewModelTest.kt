@@ -17,6 +17,8 @@ import com.flyonz.ceritaria.studio.core.media.VideoMetadata
 import com.flyonz.ceritaria.studio.core.media.VideoSelectionPreparer
 import com.flyonz.ceritaria.studio.core.media.VideoSourceAccess
 import com.flyonz.ceritaria.studio.core.upload.VideoUploadStatus
+import com.flyonz.ceritaria.studio.core.upload.execution.VideoUploadScheduleResult
+import com.flyonz.ceritaria.studio.core.upload.execution.VideoUploadScheduler
 import com.flyonz.ceritaria.studio.testutil.MainDispatcherRule
 import java.io.File
 import java.time.Instant
@@ -26,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
 
@@ -81,9 +84,71 @@ class EpisodeLocalVideoViewModelTest {
             )
         }
 
+    @Test
+    fun readySourceSchedulesUploadAndPersistsQueuedState() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val repo = FakeJobs()
+            val scheduler = FakeScheduler()
+            val viewModel = viewModel(
+                repo,
+                SavedStateHandle(mapOf("episodeId" to "episode-1")),
+                scheduler,
+            )
+
+            viewModel.select("content://video/compatible")
+            advanceUntilIdle()
+            viewModel.uploadVideo()
+            advanceUntilIdle()
+
+            assertNotNull(scheduler.enqueuedJobId)
+            assertEquals(EpisodeLocalVideoStatus.UPLOAD_QUEUED, viewModel.state.value.status)
+            assertEquals(VideoUploadStatus.QUEUED, repo.current?.uploadStatus)
+        }
+
+    @Test
+    fun rejectedScheduleBecomesUploadFailure() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val repo = FakeJobs()
+            val scheduler = FakeScheduler(VideoUploadScheduleResult.REJECTED)
+            val viewModel = viewModel(
+                repo,
+                SavedStateHandle(mapOf("episodeId" to "episode-1")),
+                scheduler,
+            )
+
+            viewModel.select("content://video/compatible")
+            advanceUntilIdle()
+            viewModel.uploadVideo()
+            advanceUntilIdle()
+
+            assertEquals(EpisodeLocalVideoStatus.UPLOAD_FAILED, viewModel.state.value.status)
+            assertEquals("UPLOAD_SCHEDULE_REJECTED", repo.current?.lastErrorCode)
+        }
+
+    @Test
+    fun readyRemoteAssetMapsToUploadReady() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val initial = job(VideoEncodingStatus.READY).copy(
+                encodedLocalUri = "file:/encoded/job-1.mp4",
+                uploadStatus = VideoUploadStatus.READY,
+                remoteAssetId = "asset-1",
+            )
+            val repo = FakeJobs(initial)
+            val viewModel = viewModel(
+                repo,
+                SavedStateHandle(mapOf("episodeId" to "episode-1")),
+            )
+
+            advanceUntilIdle()
+
+            assertEquals(EpisodeLocalVideoStatus.UPLOAD_READY, viewModel.state.value.status)
+            assertEquals("asset-1", viewModel.state.value.job?.remoteAssetId)
+        }
+
     private fun viewModel(
         repo: FakeJobs,
         state: SavedStateHandle,
+        scheduler: FakeScheduler = FakeScheduler(),
     ): EpisodeLocalVideoViewModel {
         val store = FakeStore()
         val preparer = VideoSelectionPreparer(
@@ -101,8 +166,25 @@ class EpisodeLocalVideoViewModelTest {
                 temporaryMediaStore = store,
             ),
             encodingRecovery = VideoEncodingRecovery(repo, store),
+            uploadScheduler = scheduler,
             jobs = repo,
         )
+    }
+
+    private class FakeScheduler(
+        private val result: VideoUploadScheduleResult = VideoUploadScheduleResult.SCHEDULED,
+    ) : VideoUploadScheduler {
+        var enqueuedJobId: String? = null
+        var cancelledJobId: String? = null
+
+        override fun enqueue(jobId: String, totalBytes: Long): VideoUploadScheduleResult {
+            enqueuedJobId = jobId
+            return result
+        }
+
+        override suspend fun cancel(jobId: String) {
+            cancelledJobId = jobId
+        }
     }
 
     private class FakeAccess : VideoSourceAccess {
@@ -128,7 +210,7 @@ class EpisodeLocalVideoViewModelTest {
     }
 
     private class FakeStore : TemporaryMediaStore {
-        override fun encodedOutput(jobId: String): File = File("$jobId.mp4")
+        override fun encodedOutput(jobId: String): File = File(jobId + ".mp4")
         override fun hasEncodedOutput(jobId: String): Boolean = true
         override fun hasCapacity(estimatedOutputBytes: Long): Boolean = true
         override fun deleteEncodedOutput(jobId: String) = Unit
@@ -138,7 +220,8 @@ class EpisodeLocalVideoViewModelTest {
         initial: VideoJob? = null,
     ) : VideoJobRepository {
         private val latest = MutableStateFlow(initial)
-        private var current = initial
+        var current: VideoJob? = initial
+            private set
 
         override suspend fun getById(jobId: String): VideoJob? = current
 

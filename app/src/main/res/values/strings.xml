@@ -155,4 +155,13 @@
     <string name="video_upload_notification_title">Mengunggah video Ceritaria</string>
     <string name="video_upload_notification_starting">Menyiapkan transfer…</string>
     <string name="video_upload_notification_progress">Upload %1$d%%</string>
+    <string name="upload_video">Upload video</string>
+    <string name="retry_video_upload">Coba upload lagi</string>
+    <string name="cancel_video_upload">Batalkan upload</string>
+    <string name="video_upload_queued">Upload masuk antrean.</string>
+    <string name="video_upload_progress_local">Mengunggah video %1$d%%</string>
+    <string name="video_upload_verifying">Upload selesai. Server sedang memverifikasi asset…</string>
+    <string name="video_upload_ready">Asset R2 READY · %1$s</string>
+    <string name="video_upload_failed_local">Upload gagal: %1$s</string>
+    <string name="video_upload_cancelled_local">Upload dibatalkan. File lokal tetap tersedia.</string>
 </resources>

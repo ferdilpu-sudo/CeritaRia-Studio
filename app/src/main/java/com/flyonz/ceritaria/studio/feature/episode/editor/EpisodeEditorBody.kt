@@ -92,6 +92,8 @@ private fun EditorForm(
                 onSelected = localVideoViewModel::select,
                 onPrepare = localVideoViewModel::prepareVideo,
                 onCancel = localVideoViewModel::cancelEncoding,
+                onUpload = localVideoViewModel::uploadVideo,
+                onCancelUpload = localVideoViewModel::cancelUpload,
             )
         }
         item {
