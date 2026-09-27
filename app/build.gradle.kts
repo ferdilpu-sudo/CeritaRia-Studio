@@ -67,6 +67,16 @@ dependencies {
     ksp(libs.hilt.compiler.androidx)
     implementation(libs.work.runtime.ktx)
 
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+
+    implementation(libs.media3.common)
+    implementation(libs.media3.inspector)
+    implementation(libs.media3.transformer)
+    implementation(libs.media3.effect)
+    implementation(libs.kotlinx.coroutines.guava)
+
     implementation(platform(libs.supabase.bom))
     implementation(libs.supabase.auth)
     implementation(libs.supabase.postgrest)
@@ -77,7 +87,13 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.room.testing)
     androidTestImplementation(libs.compose.ui.test.junit4)
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
+}
+
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
