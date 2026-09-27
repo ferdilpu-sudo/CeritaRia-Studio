@@ -27,6 +27,28 @@ class EpisodeRepositoryImplTest {
     }
 
     @Test
+    fun reorderReadPreservesDatasourceOrder() = runTest {
+        val repository = EpisodeRepositoryImpl(
+            FakeEpisodeDataSource(rows = listOf(row("2"), row("1"), row("3"))),
+        )
+
+        val episodes = success(repository.getEpisodesForReorder("series-1"))
+
+        assertEquals(listOf("2", "1", "3"), episodes.map { it.id })
+    }
+
+    @Test
+    fun reorderDelegatesOrderedIdsToDatasource() = runTest {
+        val dataSource = FakeEpisodeDataSource()
+        val repository = EpisodeRepositoryImpl(dataSource)
+
+        success(repository.reorderEpisodes("series-1", listOf("3", "1", "2")))
+
+        assertEquals("series-1", dataSource.reorderedSeriesId)
+        assertEquals(listOf("3", "1", "2"), dataSource.reorderedIds)
+    }
+
+    @Test
     fun publishedCreateAssignsPublishedAt() = runTest {
         val dataSource = FakeEpisodeDataSource()
         val repository = EpisodeRepositoryImpl(dataSource)
@@ -92,6 +114,8 @@ class EpisodeRepositoryImplTest {
         var createdPayload: EpisodeWriteDto? = null
         var updatedPayload: EpisodeWriteDto? = null
         var deletedId: String? = null
+        var reorderedSeriesId: String? = null
+        var reorderedIds: List<String>? = null
 
         override suspend fun fetchEpisodes(query: EpisodeQuery): List<EpisodeRowDto> {
             readFailure?.let { throw it }
@@ -100,6 +124,11 @@ class EpisodeRepositoryImplTest {
 
         override suspend fun fetchEpisodeById(id: String): EpisodeRowDto? =
             rows.firstOrNull { it.id == id }
+
+        override suspend fun fetchEpisodesForReorder(seriesId: String): List<EpisodeRowDto> {
+            readFailure?.let { throw it }
+            return rows
+        }
 
         override suspend fun createEpisode(payload: EpisodeWriteDto): EpisodeRowDto {
             saveFailure?.let { throw it }
@@ -115,6 +144,15 @@ class EpisodeRepositoryImplTest {
 
         override suspend fun softDeleteEpisode(id: String) {
             deletedId = id
+        }
+
+        override suspend fun reorderEpisodes(
+            seriesId: String,
+            orderedEpisodeIds: List<String>,
+        ) {
+            saveFailure?.let { throw it }
+            reorderedSeriesId = seriesId
+            reorderedIds = orderedEpisodeIds
         }
 
         private fun rowFromPayload(payload: EpisodeWriteDto) = EpisodeRowDto(

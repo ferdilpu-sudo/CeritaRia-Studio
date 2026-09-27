@@ -30,6 +30,11 @@ class EpisodeRepositoryImpl @Inject constructor(
     override suspend fun getEpisodeById(id: String): AppResult<Episode?> =
         runOperation { dataSource.fetchEpisodeById(id)?.toDomain() }
 
+    override suspend fun getEpisodesForReorder(seriesId: String): AppResult<List<Episode>> =
+        runOperation {
+            dataSource.fetchEpisodesForReorder(seriesId).map(EpisodeRowDto::toDomain)
+        }
+
     override suspend fun saveEpisode(command: EpisodeSaveCommand): AppResult<Episode> =
         runOperation {
             val id = command.id ?: UUID.randomUUID().toString()
@@ -44,6 +49,13 @@ class EpisodeRepositoryImpl @Inject constructor(
 
     override suspend fun softDeleteEpisode(id: String): AppResult<Unit> =
         runOperation { dataSource.softDeleteEpisode(id) }
+
+    override suspend fun reorderEpisodes(
+        seriesId: String,
+        orderedEpisodeIds: List<String>,
+    ): AppResult<Unit> = runOperation {
+        dataSource.reorderEpisodes(seriesId, orderedEpisodeIds)
+    }
 
     private fun EpisodeSaveCommand.toWriteDto(id: String): EpisodeWriteDto {
         val publishedAt = when {

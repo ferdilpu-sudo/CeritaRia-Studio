@@ -6,6 +6,11 @@ import com.flyonz.ceritaria.studio.core.model.PagedResult
 interface EpisodeRepository {
     suspend fun getEpisodes(query: EpisodeQuery): AppResult<PagedResult<Episode>>
     suspend fun getEpisodeById(id: String): AppResult<Episode?>
+    suspend fun getEpisodesForReorder(seriesId: String): AppResult<List<Episode>>
     suspend fun saveEpisode(command: EpisodeSaveCommand): AppResult<Episode>
     suspend fun softDeleteEpisode(id: String): AppResult<Unit>
+    suspend fun reorderEpisodes(
+        seriesId: String,
+        orderedEpisodeIds: List<String>,
+    ): AppResult<Unit>
 }

@@ -91,6 +91,9 @@ class EpisodeEditorViewModelTest {
         override suspend fun getEpisodeById(id: String): AppResult<Episode?> =
             AppResult.Success(null)
 
+        override suspend fun getEpisodesForReorder(seriesId: String): AppResult<List<Episode>> =
+            AppResult.Success(emptyList())
+
         override suspend fun saveEpisode(command: EpisodeSaveCommand): AppResult<Episode> {
             saveCalls += 1
             return saveResult ?: AppResult.Success(episode(command))
@@ -98,6 +101,11 @@ class EpisodeEditorViewModelTest {
 
         override suspend fun softDeleteEpisode(id: String): AppResult<Unit> =
             AppResult.Success(Unit)
+
+        override suspend fun reorderEpisodes(
+            seriesId: String,
+            orderedEpisodeIds: List<String>,
+        ): AppResult<Unit> = AppResult.Success(Unit)
     }
 
     private class FakeSeriesRepository(

@@ -70,6 +70,9 @@ class EpisodeDetailViewModelTest {
         override suspend fun getEpisodeById(id: String): AppResult<Episode?> =
             AppResult.Success(null)
 
+        override suspend fun getEpisodesForReorder(seriesId: String): AppResult<List<Episode>> =
+            AppResult.Success(emptyList())
+
         override suspend fun saveEpisode(command: EpisodeSaveCommand): AppResult<Episode> =
             AppResult.Failure(AppError.Unknown)
 
@@ -81,5 +84,10 @@ class EpisodeDetailViewModelTest {
                 AppResult.Success(Unit)
             }
         }
+
+        override suspend fun reorderEpisodes(
+            seriesId: String,
+            orderedEpisodeIds: List<String>,
+        ): AppResult<Unit> = AppResult.Success(Unit)
     }
 }

@@ -6,12 +6,17 @@ import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeStatusFilter
 import com.flyonz.ceritaria.studio.feature.episode.domain.VideoProviderFilter
 import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder
 import java.time.Instant
 import javax.inject.Inject
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class SupabaseEpisodeDataSource @Inject constructor(
     private val clientProvider: SupabaseClientProvider,
@@ -49,6 +54,15 @@ class SupabaseEpisodeDataSource @Inject constructor(
             limit(1)
         }.decodeList<EpisodeRowDto>().firstOrNull()
 
+    override suspend fun fetchEpisodesForReorder(seriesId: String): List<EpisodeRowDto> =
+        requireClient().from("episodes").select(columns = EPISODE_COLUMNS) {
+            filter {
+                eq("series_id", seriesId)
+                exact("deleted_at", null)
+            }
+            order("episode_number", Order.ASCENDING)
+        }.decodeList<EpisodeRowDto>()
+
     override suspend fun createEpisode(payload: EpisodeWriteDto): EpisodeRowDto =
         mapConflict {
             requireClient().from("episodes").insert(payload) {
@@ -72,6 +86,24 @@ class SupabaseEpisodeDataSource @Inject constructor(
         }
     }
 
+    override suspend fun reorderEpisodes(
+        seriesId: String,
+        orderedEpisodeIds: List<String>,
+    ) {
+        mapConflict {
+            requireClient().postgrest.rpc(
+                function = "reorder_episodes",
+                parameters = buildJsonObject {
+                    put("target_series_id", seriesId)
+                    put(
+                        "ordered_episode_ids",
+                        JsonArray(orderedEpisodeIds.map(::JsonPrimitive)),
+                    )
+                },
+            )
+        }
+    }
+
     private fun requireClient() = requireNotNull(clientProvider.clientOrNull) {
         "Supabase is not configured."
     }
@@ -79,7 +111,9 @@ class SupabaseEpisodeDataSource @Inject constructor(
     private suspend fun <T> mapConflict(block: suspend () -> T): T = try {
         block()
     } catch (error: PostgrestRestException) {
-        if (error.code == UNIQUE_VIOLATION) throw EpisodeConflictException()
+        if (error.code == UNIQUE_VIOLATION || error.code == INVALID_PARAMETER) {
+            throw EpisodeConflictException()
+        }
         throw error
     }
 
@@ -108,6 +142,7 @@ class SupabaseEpisodeDataSource @Inject constructor(
 
     private companion object {
         const val UNIQUE_VIOLATION = "23505"
+        const val INVALID_PARAMETER = "22023"
         val EPISODE_COLUMNS = Columns.raw(
             """
             id,series_id,episode_number,slug,title,short_synopsis,recap,highlights,
