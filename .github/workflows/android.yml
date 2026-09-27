@@ -47,6 +47,16 @@ jobs:
             failed=1
           fi
 
+          if grep -RniE '(Log\.[A-Za-z]+\(|println\(|print\().*(access[_-]?token|refresh[_-]?token|authorization|bearer|password)' app/src/main; then
+            echo "::error::Potential sensitive credential logging found in Android source."
+            failed=1
+          fi
+
+          if grep -RniE 'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' app/src/main; then
+            echo "::error::JWT-like literal found in Android source."
+            failed=1
+          fi
+
           exit "$failed"
 
       - name: Verify
