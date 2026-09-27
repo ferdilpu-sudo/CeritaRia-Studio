@@ -122,7 +122,6 @@ class VideoEncodingCoordinatorTest {
         override fun hasEncodedOutput(jobId: String): Boolean = true
         override fun hasCapacity(estimatedOutputBytes: Long): Boolean = hasCapacity
         override fun deleteEncodedOutput(jobId: String) = Unit
-        override fun cleanupEncodedOutputsOlderThan(cutoff: Instant) = Unit
     }
 
     private class FakeJobs(initial: VideoJob) : VideoJobRepository {

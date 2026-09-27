@@ -3,7 +3,6 @@ package com.flyonz.ceritaria.studio.core.media
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
-import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,13 +28,6 @@ class AndroidTemporaryMediaStore @Inject constructor(
 
     override fun deleteEncodedOutput(jobId: String) {
         encodedOutput(jobId).delete()
-    }
-
-    override fun cleanupEncodedOutputsOlderThan(cutoff: Instant) {
-        val cutoffMs = cutoff.toEpochMilli()
-        encodedDirectory().listFiles()
-            ?.filter { it.isFile && it.lastModified() < cutoffMs }
-            ?.forEach(File::delete)
     }
 
     private fun encodedDirectory(): File =
