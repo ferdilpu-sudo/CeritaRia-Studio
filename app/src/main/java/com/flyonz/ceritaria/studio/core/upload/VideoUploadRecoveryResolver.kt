@@ -13,7 +13,8 @@ class VideoUploadRecoveryResolver @Inject constructor(
 
         val remote = try {
             api.getStatus(sessionId)
-        } catch (_: VideoUploadApiException) {
+        } catch (error: VideoUploadApiException) {
+            if (error.code !in RESTARTABLE_STATUS_ERRORS) throw error
             cancelBestEffort(sessionId)
             return VideoUploadRecoveryPlan.NewSession
         }
@@ -62,15 +63,25 @@ class VideoUploadRecoveryResolver @Inject constructor(
         }
 
     private suspend fun cancelBestEffort(sessionId: String) {
-        runCatching { api.cancelUpload(sessionId) }
+        try {
+            api.cancelUpload(sessionId)
+        } catch (_: VideoUploadApiException) {
+            Unit
+        }
     }
 
     private companion object {
         val TERMINAL_STATUSES = setOf("CANCELLED", "FAILED", "EXPIRED")
         val FINALIZING_STATUSES = setOf("COMPLETING", "UPLOADED", "VERIFYING")
+        val RESTARTABLE_STATUS_ERRORS = setOf(
+            "UPLOAD_SESSION_NOT_FOUND",
+            "VIDEO_ASSET_NOT_FOUND",
+            "UPLOAD_SESSION_EXPIRED",
+        )
         val SINGLE_RESTARTABLE_ERRORS = setOf(
             "UPLOADED_OBJECT_NOT_FOUND",
             "UPLOAD_SESSION_NOT_FINALIZABLE",
+            "UPLOAD_SESSION_EXPIRED",
         )
     }
 }
