@@ -34,6 +34,7 @@ fun SeriesDetailScreen(
     contentPadding: PaddingValues,
     onBack: () -> Unit,
     onEpisodesClick: (String) -> Unit,
+    onReorderClick: (String) -> Unit,
     onEditClick: (String) -> Unit,
     onDeleted: () -> Unit,
     viewModel: SeriesDetailViewModel = hiltViewModel(),
@@ -66,6 +67,7 @@ fun SeriesDetailScreen(
                 isDeleting = state.isDeleting,
                 deleteError = state.deleteError,
                 onEpisodesClick = onEpisodesClick,
+                onReorderClick = onReorderClick,
                 onEditClick = onEditClick,
                 onDeleteClick = { showDeleteDialog = true },
             )

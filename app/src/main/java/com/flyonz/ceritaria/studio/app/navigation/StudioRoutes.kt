@@ -3,6 +3,7 @@ package com.flyonz.ceritaria.studio.app.navigation
 object StudioRoutes {
     const val SERIES_DETAIL = "series/{seriesId}"
     const val SERIES_EPISODES = "series/{seriesId}/episodes"
+    const val SERIES_REORDER = "series/{seriesId}/reorder"
     const val SERIES_EDITOR_NEW = "series-editor/new"
     const val SERIES_EDITOR_EDIT = "series-editor/{seriesId}"
 
@@ -13,6 +14,7 @@ object StudioRoutes {
 
     fun seriesDetail(id: String) = "series/$id"
     fun seriesEpisodes(id: String) = "series/$id/episodes"
+    fun seriesReorder(id: String) = "series/$id/reorder"
     fun seriesEditor(id: String) = "series-editor/$id"
 
     fun episodeDetail(id: String) = "episode/$id"

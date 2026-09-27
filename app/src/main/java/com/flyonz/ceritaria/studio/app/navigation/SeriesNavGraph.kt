@@ -5,6 +5,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import com.flyonz.ceritaria.studio.feature.episode.list.EpisodeListScreen
+import com.flyonz.ceritaria.studio.feature.episode.reorder.EpisodeReorderScreen
 import com.flyonz.ceritaria.studio.feature.series.detail.SeriesDetailScreen
 import com.flyonz.ceritaria.studio.feature.series.editor.SeriesEditorScreen
 import com.flyonz.ceritaria.studio.feature.series.list.SeriesListScreen
@@ -25,10 +26,17 @@ fun NavGraphBuilder.seriesNavGraph(
             contentPadding = contentPadding,
             onBack = navController::popBackStack,
             onEpisodesClick = { navController.navigate(StudioRoutes.seriesEpisodes(it)) },
+            onReorderClick = { navController.navigate(StudioRoutes.seriesReorder(it)) },
             onEditClick = { navController.navigate(StudioRoutes.seriesEditor(it)) },
             onDeleted = {
                 navController.popBackStack(StudioDestination.Series.route, inclusive = false)
             },
+        )
+    }
+    composable(StudioRoutes.SERIES_REORDER) {
+        EpisodeReorderScreen(
+            contentPadding = contentPadding,
+            onBack = navController::popBackStack,
         )
     }
     composable(StudioRoutes.SERIES_EDITOR_NEW) {

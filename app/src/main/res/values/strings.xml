@@ -112,4 +112,17 @@
     <string name="delete_episode_title">Hapus episode?</string>
     <string name="delete_episode_message">Episode akan di-soft-delete dan tidak lagi dipublikasikan.</string>
     <string name="episode_delete_error">Episode tidak dapat dihapus.</string>
+    <string name="reorder_episodes">Atur urutan episode</string>
+    <string name="reorder_help">Geser episode dengan tombol naik/turun, lalu simpan urutan sekali. Nomor episode lama tetap dipakai sebagai himpunan nomor yang aman.</string>
+    <string name="reorder_save_order">Simpan urutan</string>
+    <string name="reorder_saving">Menyimpan urutan…</string>
+    <string name="reorder_saved">Urutan episode tersimpan.</string>
+    <string name="reorder_load_error">Daftar episode tidak dapat dimuat untuk diurutkan.</string>
+    <string name="reorder_conflict">Urutan berubah di backend atau daftar tidak lagi cocok. Muat ulang lalu coba lagi.</string>
+    <string name="reorder_save_error">Urutan episode tidak dapat disimpan.</string>
+    <string name="no_episodes_reorder">Belum ada episode aktif untuk diurutkan.</string>
+    <string name="reorder_episode_position">%1$d. %2$s</string>
+    <string name="original_episode_number">Nomor saat ini: %1$d</string>
+    <string name="move_episode_up">Naikkan %1$s</string>
+    <string name="move_episode_down">Turunkan %1$s</string>
 </resources>

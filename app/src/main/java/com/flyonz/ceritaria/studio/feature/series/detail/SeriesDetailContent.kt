@@ -28,6 +28,7 @@ fun SeriesDetailContent(
     isDeleting: Boolean,
     deleteError: Boolean,
     onEpisodesClick: (String) -> Unit,
+    onReorderClick: (String) -> Unit,
     onEditClick: (String) -> Unit,
     onDeleteClick: () -> Unit,
 ) {
@@ -55,6 +56,12 @@ fun SeriesDetailContent(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(stringResource(R.string.view_series_episodes))
+        }
+        OutlinedButton(
+            onClick = { onReorderClick(series.id) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.reorder_episodes))
         }
 
         DetailField(stringResource(R.string.slug), series.slug)
