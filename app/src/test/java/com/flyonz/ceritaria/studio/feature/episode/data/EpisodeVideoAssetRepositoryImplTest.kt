@@ -62,6 +62,26 @@ class EpisodeVideoAssetRepositoryImplTest {
         assertTrue(result is AppResult.Failure)
     }
 
+    @Test
+    fun previewMapsTemporaryUrl() = runTest {
+        val repository = EpisodeVideoAssetRepositoryImpl(
+            FakeDataSource(
+                EpisodeVideoAttachmentDto(
+                    episodeId = "episode-1",
+                    assetId = "asset-1",
+                    status = "ATTACHED",
+                ),
+            ),
+        )
+
+        val result = repository.getPreview("asset-1")
+
+        assertTrue(result is AppResult.Success)
+        val value = (result as AppResult.Success).value
+        assertEquals("https://preview.example/video", value.url)
+        assertEquals(900, value.expiresInSeconds)
+    }
+
     private class FakeDataSource(
         private val response: EpisodeVideoAttachmentDto? = null,
         private val failure: Throwable? = null,
@@ -73,5 +93,13 @@ class EpisodeVideoAssetRepositoryImplTest {
             failure?.let { throw it }
             return requireNotNull(response)
         }
+
+        override suspend fun getPreview(assetId: String): EpisodeVideoPreviewDto =
+            EpisodeVideoPreviewDto(
+                assetId = assetId,
+                status = "READY",
+                url = "https://preview.example/video",
+                expiresInSeconds = 900,
+            )
     }
 }

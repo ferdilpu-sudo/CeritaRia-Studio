@@ -31,6 +31,7 @@ fun EpisodeLocalVideoSection(
     attachedAssetId: String?,
     attachmentState: EpisodeVideoAttachmentUiState,
     onAttach: (String) -> Unit,
+    onPreview: (String) -> Unit,
 ) {
     val picker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -121,6 +122,7 @@ fun EpisodeLocalVideoSection(
                 attachedAssetId = attachedAssetId,
                 state = attachmentState,
                 onAttach = onAttach,
+                onPreview = onPreview,
             )
         }
 

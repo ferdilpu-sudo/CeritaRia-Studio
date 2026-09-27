@@ -7,4 +7,6 @@ interface EpisodeVideoAssetRepository {
         episodeId: String,
         assetId: String,
     ): AppResult<EpisodeVideoAttachment>
+
+    suspend fun getPreview(assetId: String): AppResult<EpisodeVideoPreview>
 }

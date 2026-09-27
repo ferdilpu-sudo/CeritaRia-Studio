@@ -172,4 +172,7 @@
     <string name="video_asset_attached_active">Asset R2 ini sudah aktif untuk episode.</string>
     <string name="video_asset_attach_failed">Gagal memasang asset: %1$s</string>
     <string name="retry_attach_video_asset">Coba pasang lagi</string>
+    <string name="preview_video">Preview video</string>
+    <string name="preview_video_loading">Menyiapkan preview…</string>
+    <string name="video_asset_preview_failed">Preview gagal: %1$s</string>
 </resources>

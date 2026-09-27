@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,10 +17,36 @@ fun EpisodeVideoAttachmentControls(
     attachedAssetId: String?,
     state: EpisodeVideoAttachmentUiState,
     onAttach: (String) -> Unit,
+    onPreview: (String) -> Unit,
 ) {
     val assetId = remoteAssetId ?: return
     val isAlreadyAttached = assetId == attachedAssetId ||
         (state.status == EpisodeVideoAttachmentStatus.ATTACHED && state.assetId == assetId)
+
+    if (state.previewStatus == EpisodeVideoPreviewStatus.FAILED) {
+        Text(
+            text = stringResource(
+                R.string.video_asset_preview_failed,
+                state.previewErrorCode ?: "UNKNOWN",
+            ),
+            color = MaterialTheme.colorScheme.error,
+        )
+    }
+    OutlinedButton(
+        onClick = { onPreview(assetId) },
+        enabled = state.previewStatus != EpisodeVideoPreviewStatus.LOADING,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            stringResource(
+                if (state.previewStatus == EpisodeVideoPreviewStatus.LOADING) {
+                    R.string.preview_video_loading
+                } else {
+                    R.string.preview_video
+                },
+            ),
+        )
+    }
 
     when {
         isAlreadyAttached -> Text(

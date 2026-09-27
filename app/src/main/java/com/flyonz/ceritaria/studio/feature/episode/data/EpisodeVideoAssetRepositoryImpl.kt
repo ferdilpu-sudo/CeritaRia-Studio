@@ -4,6 +4,7 @@ import com.flyonz.ceritaria.studio.core.error.AppError
 import com.flyonz.ceritaria.studio.core.error.AppResult
 import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeVideoAssetRepository
 import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeVideoAttachment
+import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeVideoPreview
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -31,6 +32,26 @@ class EpisodeVideoAssetRepositoryImpl @Inject constructor(
         AppResult.Failure(error.toAppError())
     } catch (_: IllegalArgumentException) {
         AppResult.Failure(AppError.Validation("Invalid attachment response"))
+    } catch (_: Throwable) {
+        AppResult.Failure(AppError.Network)
+    }
+
+    override suspend fun getPreview(assetId: String): AppResult<EpisodeVideoPreview> = try {
+        val response = dataSource.getPreview(assetId)
+        require(response.status == "READY")
+        AppResult.Success(
+            EpisodeVideoPreview(
+                assetId = response.assetId,
+                url = response.url,
+                expiresInSeconds = response.expiresInSeconds,
+            ),
+        )
+    } catch (error: CancellationException) {
+        throw error
+    } catch (error: EpisodeVideoAssetApiException) {
+        AppResult.Failure(error.toAppError())
+    } catch (_: IllegalArgumentException) {
+        AppResult.Failure(AppError.Validation("Invalid preview response"))
     } catch (_: Throwable) {
         AppResult.Failure(AppError.Network)
     }

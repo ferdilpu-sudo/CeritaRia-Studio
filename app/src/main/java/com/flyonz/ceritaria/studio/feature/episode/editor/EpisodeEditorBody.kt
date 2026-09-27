@@ -105,6 +105,7 @@ private fun EditorForm(
                 attachedAssetId = state.form.videoAssetId,
                 attachmentState = attachmentState,
                 onAttach = attachmentViewModel::attach,
+                onPreview = attachmentViewModel::preview,
             )
         }
         item {

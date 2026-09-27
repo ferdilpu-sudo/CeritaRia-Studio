@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -46,6 +47,7 @@ fun EpisodeEditorScreen(
     val mediaState by mediaViewModel.state.collectAsStateWithLifecycle()
     val localVideoState by localVideoViewModel.state.collectAsStateWithLifecycle()
     val attachmentState by attachmentViewModel.state.collectAsStateWithLifecycle()
+    val uriHandler = LocalUriHandler.current
     var showDiscardDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
@@ -62,8 +64,11 @@ fun EpisodeEditorScreen(
     }
     LaunchedEffect(attachmentViewModel, viewModel) {
         attachmentViewModel.effects.collect { effect ->
-            if (effect is EpisodeVideoAttachmentEffect.Attached) {
-                viewModel.applyR2Attachment(effect.assetId)
+            when (effect) {
+                is EpisodeVideoAttachmentEffect.Attached ->
+                    viewModel.applyR2Attachment(effect.assetId)
+                is EpisodeVideoAttachmentEffect.PreviewReady ->
+                    uriHandler.openUri(effect.url)
             }
         }
     }

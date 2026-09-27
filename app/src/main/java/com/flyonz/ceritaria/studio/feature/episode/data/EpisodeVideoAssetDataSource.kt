@@ -5,4 +5,6 @@ interface EpisodeVideoAssetDataSource {
         episodeId: String,
         assetId: String,
     ): EpisodeVideoAttachmentDto
+
+    suspend fun getPreview(assetId: String): EpisodeVideoPreviewDto
 }

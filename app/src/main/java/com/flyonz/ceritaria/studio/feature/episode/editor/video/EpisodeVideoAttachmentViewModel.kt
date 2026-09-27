@@ -63,6 +63,42 @@ class EpisodeVideoAttachmentViewModel @Inject constructor(
         }
     }
 
+    fun preview(assetId: String) {
+        if (assetId.isBlank() ||
+            mutableState.value.previewStatus == EpisodeVideoPreviewStatus.LOADING
+        ) {
+            return
+        }
+
+        viewModelScope.launch {
+            mutableState.update {
+                it.copy(
+                    previewStatus = EpisodeVideoPreviewStatus.LOADING,
+                    previewErrorCode = null,
+                )
+            }
+            when (val result = repository.getPreview(assetId)) {
+                is AppResult.Success -> {
+                    mutableState.update {
+                        it.copy(
+                            previewStatus = EpisodeVideoPreviewStatus.IDLE,
+                            previewErrorCode = null,
+                        )
+                    }
+                    effectChannel.send(
+                        EpisodeVideoAttachmentEffect.PreviewReady(result.value.url),
+                    )
+                }
+                is AppResult.Failure -> mutableState.update {
+                    it.copy(
+                        previewStatus = EpisodeVideoPreviewStatus.FAILED,
+                        previewErrorCode = result.error.errorCode(),
+                    )
+                }
+            }
+        }
+    }
+
     private fun AppError.errorCode(): String = when (this) {
         AppError.Configuration -> "CONFIGURATION"
         AppError.Authentication -> "AUTHENTICATION"

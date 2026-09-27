@@ -5,6 +5,7 @@ import com.flyonz.ceritaria.studio.core.error.AppError
 import com.flyonz.ceritaria.studio.core.error.AppResult
 import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeVideoAssetRepository
 import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeVideoAttachment
+import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeVideoPreview
 import com.flyonz.ceritaria.studio.testutil.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -26,7 +27,7 @@ class EpisodeVideoAttachmentViewModelTest {
             val viewModel = EpisodeVideoAttachmentViewModel(
                 SavedStateHandle(mapOf("episodeId" to "episode-1")),
                 FakeRepository(
-                    AppResult.Success(
+                    attachResult = AppResult.Success(
                         EpisodeVideoAttachment(
                             episodeId = "episode-1",
                             assetId = "asset-1",
@@ -56,7 +57,7 @@ class EpisodeVideoAttachmentViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val viewModel = EpisodeVideoAttachmentViewModel(
                 SavedStateHandle(mapOf("episodeId" to "episode-1")),
-                FakeRepository(AppResult.Failure(AppError.Conflict)),
+                FakeRepository(attachResult = AppResult.Failure(AppError.Conflict)),
             )
 
             viewModel.attach("asset-1")
@@ -69,12 +70,50 @@ class EpisodeVideoAttachmentViewModelTest {
             assertEquals("NOT_ATTACHABLE", viewModel.state.value.errorCode)
         }
 
+    @Test
+    fun previewPublishesTemporaryUrlEffect() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val viewModel = EpisodeVideoAttachmentViewModel(
+                SavedStateHandle(mapOf("episodeId" to "episode-1")),
+                FakeRepository(
+                    attachResult = AppResult.Failure(AppError.Unknown),
+                    previewResult = AppResult.Success(
+                        EpisodeVideoPreview(
+                            assetId = "asset-1",
+                            url = "https://preview.example/video",
+                            expiresInSeconds = 900,
+                        ),
+                    ),
+                ),
+            )
+            val effect = async { viewModel.effects.first() }
+
+            viewModel.preview("asset-1")
+            advanceUntilIdle()
+
+            assertEquals(
+                EpisodeVideoAttachmentEffect.PreviewReady(
+                    "https://preview.example/video",
+                ),
+                effect.await(),
+            )
+            assertEquals(
+                EpisodeVideoPreviewStatus.IDLE,
+                viewModel.state.value.previewStatus,
+            )
+        }
+
     private class FakeRepository(
-        private val result: AppResult<EpisodeVideoAttachment>,
+        private val attachResult: AppResult<EpisodeVideoAttachment>,
+        private val previewResult: AppResult<EpisodeVideoPreview> =
+            AppResult.Failure(AppError.Unknown),
     ) : EpisodeVideoAssetRepository {
         override suspend fun attachReadyAsset(
             episodeId: String,
             assetId: String,
-        ): AppResult<EpisodeVideoAttachment> = result
+        ): AppResult<EpisodeVideoAttachment> = attachResult
+
+        override suspend fun getPreview(assetId: String): AppResult<EpisodeVideoPreview> =
+            previewResult
     }
 }

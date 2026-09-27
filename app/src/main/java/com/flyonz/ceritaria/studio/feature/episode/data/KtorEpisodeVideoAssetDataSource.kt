@@ -6,6 +6,7 @@ import com.flyonz.ceritaria.studio.core.network.VideoApiHttpClient
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.isSuccess
@@ -31,6 +32,21 @@ class KtorEpisodeVideoAssetDataSource @Inject constructor(
         val response = client.post(
             config.baseUrl + "/api/episodes/" + episodeId +
                 "/video-assets/" + assetId + "/attach",
+        ) {
+            bearerAuth(token)
+        }
+        response.requireSuccess()
+        return response.body()
+    }
+
+    override suspend fun getPreview(assetId: String): EpisodeVideoPreviewDto {
+        if (!config.isConfigured) {
+            throw EpisodeVideoAssetApiException("API_NOT_CONFIGURED", 0)
+        }
+        val token = tokenProvider.accessToken()
+            ?: throw EpisodeVideoAssetApiException("AUTH_REQUIRED", 401)
+        val response = client.get(
+            config.baseUrl + "/api/video-assets/" + assetId + "/preview",
         ) {
             bearerAuth(token)
         }

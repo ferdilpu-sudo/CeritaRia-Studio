@@ -5,4 +5,8 @@ sealed interface EpisodeVideoAttachmentEffect {
         val assetId: String,
         val replacedAssetId: String?,
     ) : EpisodeVideoAttachmentEffect
+
+    data class PreviewReady(
+        val url: String,
+    ) : EpisodeVideoAttachmentEffect
 }
