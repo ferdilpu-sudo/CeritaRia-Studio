@@ -78,5 +78,6 @@ private fun PublishStatus.label(): String = when (this) {
 fun VideoProvider.label(): String = when (this) {
     VideoProvider.YouTube -> stringResource(R.string.youtube)
     VideoProvider.Facebook -> stringResource(R.string.facebook)
+    VideoProvider.R2 -> stringResource(R.string.r2)
     is VideoProvider.Unknown -> stringResource(R.string.provider_unknown, rawValue)
 }

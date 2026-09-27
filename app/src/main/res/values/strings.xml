@@ -34,6 +34,7 @@
     <string name="status_deleted">Deleted</string>
     <string name="youtube">YouTube</string>
     <string name="facebook">Facebook</string>
+    <string name="r2">R2</string>
     <string name="provider_unknown">Unknown (%1$s)</string>
     <string name="all_series">Semua series</string>
     <string name="view_series_episodes">Lihat episode series ini</string>
