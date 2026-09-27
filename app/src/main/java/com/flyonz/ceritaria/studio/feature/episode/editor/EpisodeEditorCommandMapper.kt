@@ -24,7 +24,8 @@ fun EpisodeEditorForm.toSaveCommand(
     videoProvider = requireNotNull(
         EditableVideoProvider.entries.firstOrNull { it.rawValue == videoProvider },
     ),
-    videoUrl = videoUrl.trim(),
+    videoUrl = if (videoProvider == "r2") null else videoUrl.trim(),
+    videoAssetId = if (videoProvider == "r2") videoAssetId else null,
     thumbnailUrl = thumbnailUrl.trim().ifEmpty { null },
     durationSeconds = durationSeconds.trim().ifEmpty { null }?.toInt(),
     isPublished = isPublished,

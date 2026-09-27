@@ -14,6 +14,7 @@ object EpisodeEditorValidator {
         checkMax(form.highlights, 4_000, EpisodeEditorField.HIGHLIGHTS)?.let(::add)
         validateProvider(form.videoProvider)?.let(::add)
         validateVideoUrl(form.videoProvider, form.videoUrl)?.let(::add)
+        validateR2Asset(form)?.let(::add)
         validateUrl(form.thumbnailUrl, EpisodeEditorField.THUMBNAIL_URL)?.let(::add)
         validateOptionalNumber(form.durationSeconds, 86_400, EpisodeEditorField.DURATION)?.let(::add)
         checkMax(form.seoTitle, 200, EpisodeEditorField.SEO_TITLE)?.let(::add)
@@ -72,6 +73,7 @@ object EpisodeEditorValidator {
         provider: String,
         value: String,
     ): EpisodeValidationError? = when {
+        provider == "r2" -> null
         value.trim().isEmpty() -> error(EpisodeEditorField.VIDEO_URL, EpisodeValidationIssue.REQUIRED)
         value.trim().length > 2048 -> error(EpisodeEditorField.VIDEO_URL, EpisodeValidationIssue.TOO_LONG)
         !EpisodeVideoUrlValidator.isValid(provider, value) ->
@@ -102,5 +104,15 @@ object EpisodeEditorValidator {
     ) = EpisodeValidationError(field, issue)
 
     private val SLUG_PATTERN = Regex("^[a-z0-9]+(?:-[a-z0-9]+)*$")
-    private val SUPPORTED_PROVIDERS = setOf("youtube", "facebook")
+    private fun validateR2Asset(form: EpisodeEditorForm): EpisodeValidationError? {
+        if (form.videoProvider != "r2") return null
+        val valid = form.videoAssetId
+            ?.let { runCatching { UUID.fromString(it) }.isSuccess }
+            ?: false
+        return if (valid) null else {
+            error(EpisodeEditorField.VIDEO_PROVIDER, EpisodeValidationIssue.UNSUPPORTED_PROVIDER)
+        }
+    }
+
+    private val SUPPORTED_PROVIDERS = setOf("youtube", "facebook", "r2")
 }

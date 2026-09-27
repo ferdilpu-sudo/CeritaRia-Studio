@@ -17,17 +17,35 @@ fun EpisodeVideoSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(stringResource(R.string.video), style = MaterialTheme.typography.titleMedium)
-        EpisodeProviderSelector(
-            selected = form.videoProvider,
-            issue = errors[EpisodeEditorField.VIDEO_PROVIDER],
-            onSelected = { onChange(form.copy(videoProvider = it)) },
-        )
-        EpisodeEditorTextField(
-            value = form.videoUrl,
-            onValueChange = { onChange(form.copy(videoUrl = it)) },
-            label = stringResource(R.string.video_url),
-            issue = errors[EpisodeEditorField.VIDEO_URL],
-        )
+
+        if (form.videoProvider == "r2") {
+            Text(
+                text = stringResource(R.string.r2_video_attached),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                text = form.videoAssetId ?: stringResource(R.string.r2_video_asset_missing),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (form.videoAssetId == null) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            )
+        } else {
+            EpisodeProviderSelector(
+                selected = form.videoProvider,
+                issue = errors[EpisodeEditorField.VIDEO_PROVIDER],
+                onSelected = { onChange(form.copy(videoProvider = it, videoAssetId = null)) },
+            )
+            EpisodeEditorTextField(
+                value = form.videoUrl,
+                onValueChange = { onChange(form.copy(videoUrl = it)) },
+                label = stringResource(R.string.video_url),
+                issue = errors[EpisodeEditorField.VIDEO_URL],
+            )
+        }
+
         EpisodeEditorTextField(
             value = form.durationSeconds,
             onValueChange = { onChange(form.copy(durationSeconds = it)) },

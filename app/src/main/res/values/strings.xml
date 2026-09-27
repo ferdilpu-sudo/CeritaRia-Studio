@@ -164,4 +164,6 @@
     <string name="video_upload_ready">Asset R2 READY · %1$s</string>
     <string name="video_upload_failed_local">Upload gagal: %1$s</string>
     <string name="video_upload_cancelled_local">Upload dibatalkan. File lokal tetap tersedia.</string>
+    <string name="r2_video_attached">Video R2 terpasang</string>
+    <string name="r2_video_asset_missing">Asset R2 tidak valid.</string>
 </resources>

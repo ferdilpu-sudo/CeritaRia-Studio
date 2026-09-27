@@ -17,6 +17,7 @@ fun EpisodeRowDto.toDomain(): Episode = Episode(
     highlights = highlights,
     videoProvider = videoProviderFrom(videoProvider),
     videoUrl = videoUrl,
+    videoAssetId = videoAssetId,
     thumbnailUrl = thumbnailUrl,
     durationSeconds = durationSeconds,
     publishStatus = resolvePublishStatus(isPublished, publishedAt, deletedAt),

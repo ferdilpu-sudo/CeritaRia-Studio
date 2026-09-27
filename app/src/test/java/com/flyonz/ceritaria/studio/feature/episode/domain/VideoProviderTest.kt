@@ -9,6 +9,7 @@ class VideoProviderTest {
     fun mapsKnownProviders() {
         assertEquals(VideoProvider.YouTube, videoProviderFrom("youtube"))
         assertEquals(VideoProvider.Facebook, videoProviderFrom("facebook"))
+        assertEquals(VideoProvider.R2, videoProviderFrom("r2"))
     }
 
     @Test

@@ -73,6 +73,7 @@ class EpisodeRepositoryImpl @Inject constructor(
             highlights = highlights,
             videoProvider = videoProvider.rawValue,
             videoUrl = videoUrl,
+            videoAssetId = videoAssetId,
             thumbnailUrl = thumbnailUrl,
             durationSeconds = durationSeconds,
             isPublished = isPublished,

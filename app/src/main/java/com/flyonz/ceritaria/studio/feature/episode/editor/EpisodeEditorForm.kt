@@ -14,6 +14,7 @@ data class EpisodeEditorForm(
     val highlights: String = "",
     val videoProvider: String = "youtube",
     val videoUrl: String = "",
+    val videoAssetId: String? = null,
     val thumbnailUrl: String = "",
     val durationSeconds: String = "",
     val isPublished: Boolean = false,
@@ -30,7 +31,8 @@ data class EpisodeEditorForm(
             recap = episode.recap.orEmpty(),
             highlights = episode.highlights.joinToString("\n"),
             videoProvider = episode.videoProvider.rawValue(),
-            videoUrl = episode.videoUrl,
+            videoUrl = episode.videoUrl.orEmpty(),
+            videoAssetId = episode.videoAssetId,
             thumbnailUrl = episode.thumbnailUrl.orEmpty(),
             durationSeconds = episode.durationSeconds?.toString().orEmpty(),
             isPublished = episode.publishStatus == PublishStatus.PUBLISHED,
@@ -43,5 +45,6 @@ data class EpisodeEditorForm(
 private fun VideoProvider.rawValue(): String = when (this) {
     VideoProvider.YouTube -> "youtube"
     VideoProvider.Facebook -> "facebook"
+    VideoProvider.R2 -> "r2"
     is VideoProvider.Unknown -> rawValue
 }

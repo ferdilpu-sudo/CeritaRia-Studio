@@ -146,7 +146,7 @@ class SupabaseEpisodeDataSource @Inject constructor(
         val EPISODE_COLUMNS = Columns.raw(
             """
             id,series_id,episode_number,slug,title,short_synopsis,recap,highlights,
-            video_provider,video_url,thumbnail_url,duration_seconds,is_published,published_at,
+            video_provider,video_url,video_asset_id,thumbnail_url,duration_seconds,is_published,published_at,
             seo_title,seo_description,created_at,updated_at,deleted_at,
             series(id,title)
             """.trimIndent(),

@@ -5,6 +5,7 @@ import java.time.Instant
 enum class EditableVideoProvider(val rawValue: String) {
     YOUTUBE("youtube"),
     FACEBOOK("facebook"),
+    R2("r2"),
 }
 
 data class EpisodeSaveCommand(
@@ -17,7 +18,8 @@ data class EpisodeSaveCommand(
     val recap: String?,
     val highlights: List<String>,
     val videoProvider: EditableVideoProvider,
-    val videoUrl: String,
+    val videoUrl: String?,
+    val videoAssetId: String? = null,
     val thumbnailUrl: String?,
     val durationSeconds: Int?,
     val isPublished: Boolean,

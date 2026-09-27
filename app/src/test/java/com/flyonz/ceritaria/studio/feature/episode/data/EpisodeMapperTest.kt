@@ -7,6 +7,29 @@ import org.junit.Test
 
 class EpisodeMapperTest {
     @Test
+    fun mapsR2Attachment() {
+        val dto = EpisodeRowDto(
+            id = "episode-r2",
+            seriesId = "series-1",
+            episodeNumber = 4,
+            slug = "episode-4",
+            title = "Episode 4",
+            videoProvider = "r2",
+            videoUrl = null,
+            videoAssetId = "22222222-2222-2222-2222-222222222222",
+            isPublished = false,
+            createdAt = "2026-09-01T10:00:00Z",
+            updatedAt = "2026-09-01T10:00:00Z",
+        )
+
+        val episode = dto.toDomain()
+
+        assertEquals(VideoProvider.R2, episode.videoProvider)
+        assertEquals(null, episode.videoUrl)
+        assertEquals("22222222-2222-2222-2222-222222222222", episode.videoAssetId)
+    }
+
+    @Test
     fun mapsVerifiedProductionFields() {
         val dto = EpisodeRowDto(
             id = "episode-1",

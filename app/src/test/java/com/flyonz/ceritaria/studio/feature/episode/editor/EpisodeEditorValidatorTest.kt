@@ -1,5 +1,7 @@
 package com.flyonz.ceritaria.studio.feature.episode.editor
 
+import com.flyonz.ceritaria.studio.feature.episode.domain.EditableVideoProvider
+
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,9 +27,26 @@ class EpisodeEditorValidatorTest {
     }
 
     @Test
-    fun unsupportedProviderCannotBeWrittenBack() {
+    fun attachedR2FormIsValidWithoutLegacyUrl() {
+        val form = validForm().copy(
+            videoProvider = "r2",
+            videoUrl = "",
+            videoAssetId = "22222222-2222-2222-2222-222222222222",
+        )
+
+        val errors = EpisodeEditorValidator.validate(form)
+
+        assertTrue(errors.isEmpty())
+        val command = form.toSaveCommand(id = "episode-1", existingPublishedAt = null)
+        assertEquals(EditableVideoProvider.R2, command.videoProvider)
+        assertEquals(null, command.videoUrl)
+        assertEquals("22222222-2222-2222-2222-222222222222", command.videoAssetId)
+    }
+
+    @Test
+    fun r2WithoutAttachedAssetIsRejected() {
         val errors = EpisodeEditorValidator.validate(
-            validForm().copy(videoProvider = "r2"),
+            validForm().copy(videoProvider = "r2", videoUrl = "", videoAssetId = null),
         )
 
         assertEquals(
