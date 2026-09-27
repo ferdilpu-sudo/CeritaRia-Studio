@@ -342,7 +342,11 @@ Drag reorder must not ship until a conflict-safe server/RPC strategy exists for 
 
 ---
 
-## Phase 1 — Android Foundation
+## Phase 1 — Android Foundation 🟡 IMPLEMENTED / PRODUCTION SMOKE PENDING
+
+Implementation is committed and CI verified. GitHub Actions run `36294547068` passed `lintDebug`, `testDebugUnitTest`, and `assembleDebug` on the Android 37 compile toolchain.
+
+The only remaining exit-gate item is a production Supabase authentication smoke test after `CERITARIA_SUPABASE_URL` and `CERITARIA_SUPABASE_PUBLISHABLE_KEY` are supplied through secure local/CI configuration. Those values are intentionally not committed to this public repository.
 
 ### Scope
 
@@ -362,9 +366,28 @@ Create the stable application shell before business features.
 - create authenticated navigation shell;
 - add baseline logging without token/PII leakage.
 
+### Implementation status
+
+- [x] Android project and Gradle toolchain created;
+- [x] build variants/environment input boundary created;
+- [x] Hilt configured;
+- [x] Navigation Compose shell created;
+- [x] baseline Material 3 design system created;
+- [x] common `AppResult` / `AppError` taxonomy created;
+- [x] Supabase client isolated behind an injectable provider;
+- [x] session restoration implemented;
+- [x] `admin_users` authorization check implemented;
+- [x] authenticated four-destination shell created;
+- [x] missing-config and unauthorized blocking states created;
+- [x] login validation unit tests added;
+- [x] `lintDebug`, `testDebugUnitTest`, and `assembleDebug` pass in CI;
+- [ ] production Supabase sign-in/session/admin-gate smoke test with configured public client values.
+
 ### Exit gate
 
-An authorized admin can launch the app, restore/sign in to a valid session, and reach an authenticated shell. Unauthorized accounts are blocked by real backend policy, not merely hidden UI.
+Code/build gate: **PASS**. Production integration smoke gate: **PENDING CONFIGURATION**.
+
+An authorized admin must still be smoke-tested against the real Supabase project to confirm session restoration and `admin_users` membership access end-to-end before Phase 1 receives a final green completion marker.
 
 ---
 
