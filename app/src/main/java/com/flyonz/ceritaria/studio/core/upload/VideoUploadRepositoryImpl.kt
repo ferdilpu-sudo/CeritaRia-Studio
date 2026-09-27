@@ -2,6 +2,7 @@ package com.flyonz.ceritaria.studio.core.upload
 
 import com.flyonz.ceritaria.studio.core.database.videojob.VideoJob
 import com.flyonz.ceritaria.studio.core.database.videojob.VideoJobRepository
+import com.flyonz.ceritaria.studio.core.media.TemporaryMediaStore
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -15,6 +16,7 @@ class VideoUploadRepositoryImpl @Inject constructor(
     private val multipartCodec: MultipartUploadStateCodec,
     private val recovery: VideoUploadRecoveryResolver,
     private val transferRunner: VideoUploadTransferRunner,
+    private val temporaryMediaStore: TemporaryMediaStore,
 ) : VideoUploadRepository {
     override suspend fun upload(
         jobId: String,
@@ -33,12 +35,13 @@ class VideoUploadRepositoryImpl @Inject constructor(
         }
 
         return try {
-            resumeOrCreate(
+            val result = resumeOrCreate(
                 job = original.copy(totalBytes = source.sizeBytes),
                 episodeId = episodeId,
                 source = source,
                 onProgress = onProgress,
             )
+            cleanupLocalOutputIfReady(result)
         } catch (error: CancellationException) {
             throw error
         } catch (error: Throwable) {
@@ -128,6 +131,19 @@ class VideoUploadRepositoryImpl @Inject constructor(
         )
         jobs.upsert(reset)
         return reset
+    }
+
+    private suspend fun cleanupLocalOutputIfReady(job: VideoJob): VideoJob {
+        if (job.uploadStatus != VideoUploadStatus.READY || !job.needsEncoding) {
+            return job
+        }
+        temporaryMediaStore.deleteEncodedOutput(job.jobId)
+        val cleaned = job.copy(
+            encodedLocalUri = null,
+            updatedAt = Instant.now(),
+        )
+        jobs.upsert(cleaned)
+        return cleaned
     }
 
     private suspend fun markFailed(jobId: String, error: Throwable) {

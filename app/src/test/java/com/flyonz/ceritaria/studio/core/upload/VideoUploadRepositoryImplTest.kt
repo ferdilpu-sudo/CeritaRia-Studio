@@ -3,7 +3,9 @@ package com.flyonz.ceritaria.studio.core.upload
 import com.flyonz.ceritaria.studio.core.database.videojob.VideoJob
 import com.flyonz.ceritaria.studio.core.database.videojob.VideoJobRepository
 import com.flyonz.ceritaria.studio.core.media.VideoEncodingStatus
+import com.flyonz.ceritaria.studio.core.media.TemporaryMediaStore
 import com.flyonz.ceritaria.studio.core.media.VideoMetadata
+import java.io.File
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +32,31 @@ class VideoUploadRepositoryImplTest {
         assertEquals("asset-ready", result.remoteAssetId)
         assertEquals(8_000_000, result.uploadedBytes)
         assertEquals(listOf(0L to 8_000_000L), r2.ranges)
+    }
+
+    @Test
+    fun encodedReadyUploadDeletesTemporaryOutputAfterRemoteReady() = runTest {
+        val encoded = job().copy(
+            needsEncoding = true,
+            encodedLocalUri = "file:/encoded/job-1.mp4",
+            encodingStatus = VideoEncodingStatus.READY,
+        )
+        val jobs = FakeJobs(encoded)
+        val api = FakeApi(
+            createdTarget = VideoUploadTarget.Single(
+                url = "https://r2/single",
+                headers = mapOf("Content-Type" to "video/mp4"),
+            ),
+        )
+        val r2 = FakeR2()
+        val store = FakeStore()
+        val repository = repository(jobs, api, r2, store = store)
+
+        val result = repository.upload("job-1")
+
+        assertEquals(VideoUploadStatus.READY, result.uploadStatus)
+        assertEquals(null, result.encodedLocalUri)
+        assertEquals("job-1", store.deletedJobId)
     }
 
     @Test
@@ -105,6 +132,7 @@ class VideoUploadRepositoryImplTest {
         api: FakeApi,
         r2: FakeR2,
         codec: MultipartUploadStateCodec = MultipartUploadStateCodec(),
+        store: FakeStore = FakeStore(),
     ): VideoUploadRepository = VideoUploadRepositoryImpl(
         jobs = jobs,
         api = api,
@@ -112,6 +140,7 @@ class VideoUploadRepositoryImplTest {
         multipartCodec = codec,
         recovery = VideoUploadRecoveryResolver(api, codec),
         transferRunner = VideoUploadTransferRunner(jobs, api, r2, codec),
+        temporaryMediaStore = store,
     )
 
     private class FakeJobs(initial: VideoJob) : VideoJobRepository {
@@ -177,6 +206,18 @@ class VideoUploadRepositoryImplTest {
 
         override suspend fun getStatus(sessionId: String): RemoteVideoUploadStatus =
             requireNotNull(remoteStatus)
+    }
+
+    private class FakeStore : TemporaryMediaStore {
+        var deletedJobId: String? = null
+
+        override fun encodedOutput(jobId: String): File = File(jobId + ".mp4")
+        override fun hasEncodedOutput(jobId: String): Boolean = true
+        override fun hasCapacity(estimatedOutputBytes: Long): Boolean = true
+
+        override fun deleteEncodedOutput(jobId: String) {
+            deletedJobId = jobId
+        }
     }
 
     private class FakeR2 : R2UploadDataSource {
