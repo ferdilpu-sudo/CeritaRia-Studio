@@ -19,8 +19,3 @@ data class SeriesWriteDto(
     @SerialName("seo_title") val seoTitle: String?,
     @SerialName("seo_description") val seoDescription: String?,
 )
-
-@Serializable
-data class SoftDeleteSeriesParams(
-    @SerialName("target_id") val targetId: String,
-)

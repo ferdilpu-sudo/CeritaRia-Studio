@@ -8,6 +8,8 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
 import javax.inject.Inject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class SupabaseSeriesDataSource @Inject constructor(
     private val clientProvider: SupabaseClientProvider,
@@ -62,7 +64,7 @@ class SupabaseSeriesDataSource @Inject constructor(
     override suspend fun softDeleteSeries(id: String) {
         requireClient().postgrest.rpc(
             function = "soft_delete_series",
-            parameters = SoftDeleteSeriesParams(targetId = id),
+            parameters = buildJsonObject { put("target_id", id) },
         )
     }
 
