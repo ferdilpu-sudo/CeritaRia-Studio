@@ -19,7 +19,9 @@ jobs:
         with:
           gradle-version: "9.1.0"
       - name: Install Android SDK 36
+        shell: bash
         run: |
-          yes | sdkmanager "platforms;android-36" "build-tools;36.0.0" >/dev/null
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
       - name: Verify
         run: gradle lintDebug testDebugUnitTest assembleDebug --stacktrace
