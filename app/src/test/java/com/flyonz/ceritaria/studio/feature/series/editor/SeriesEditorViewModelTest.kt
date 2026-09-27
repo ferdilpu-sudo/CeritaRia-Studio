@@ -82,7 +82,7 @@ class SeriesEditorViewModelTest {
         assertFalse(viewModel.state.value.isDirty)
     }
 
-    private class FakeSeriesRepository(
+    private inner class FakeSeriesRepository(
         private val existing: Series? = null,
         private val saveResult: AppResult<Series>? = null,
     ) : SeriesRepository {
