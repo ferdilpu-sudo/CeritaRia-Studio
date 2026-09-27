@@ -26,5 +26,28 @@ jobs:
           if [ -d "$ANDROID_HOME/platforms/android-37.0" ] && [ ! -e "$ANDROID_HOME/platforms/android-37" ]; then
             ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
           fi
+      - name: Enforce Android source guardrails
+        shell: bash
+        run: |
+          set -euo pipefail
+          failed=0
+
+          while IFS= read -r -d '' file; do
+            lines=$(wc -l < "$file")
+            if [ "$lines" -gt 300 ]; then
+              echo "::error file=$file::Handwritten Kotlin file has $lines lines; hard limit is 300."
+              failed=1
+            elif [ "$lines" -gt 250 ]; then
+              echo "::warning file=$file::Handwritten Kotlin file has $lines lines; soft warning threshold is 250."
+            fi
+          done < <(find app/src -type f -name '*.kt' -print0)
+
+          if grep -RniE 'service[_-]?role|R2_ACCESS_KEY_ID|R2_SECRET_ACCESS_KEY' app/src app/build.gradle.kts; then
+            echo "::error::Privileged server credential identifier found in Android source."
+            failed=1
+          fi
+
+          exit "$failed"
+
       - name: Verify
         run: gradle lintDebug testDebugUnitTest assembleDebug assembleRelease --stacktrace
