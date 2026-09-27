@@ -6,6 +6,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.os.Build
 import android.os.PersistableBundle
+import androidx.annotation.RequiresApi
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -64,6 +65,7 @@ class AndroidVideoUploadScheduler @Inject constructor(
         return VideoUploadScheduleResult.SCHEDULED
     }
 
+    @RequiresApi(API_UIDT)
     private fun scheduleUidt(
         jobId: String,
         totalBytes: Long,
@@ -94,5 +96,9 @@ class AndroidVideoUploadScheduler @Inject constructor(
         } else {
             VideoUploadScheduleResult.REJECTED
         }
+    }
+
+    private companion object {
+        const val API_UIDT = 34
     }
 }
