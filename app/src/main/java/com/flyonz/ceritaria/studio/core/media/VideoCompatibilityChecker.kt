@@ -4,9 +4,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class VideoCompatibilityChecker @Inject constructor(
-    private val outputPlanner: VideoOutputPlanner = VideoOutputPlanner(),
-) {
+class VideoCompatibilityChecker @Inject constructor() {
+    private val outputPlanner = VideoOutputPlanner()
     private val preset = StreamingPreset()
 
     fun check(metadata: VideoMetadata): VideoCompatibilityResult {
