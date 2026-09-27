@@ -2,6 +2,7 @@ package com.flyonz.ceritaria.studio.feature.media.data
 
 import com.flyonz.ceritaria.studio.core.network.SupabaseClientProvider
 import io.github.jan.supabase.storage.storage
+import io.github.jan.supabase.storage.upload
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
