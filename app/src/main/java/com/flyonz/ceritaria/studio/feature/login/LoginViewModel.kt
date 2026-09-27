@@ -25,14 +25,20 @@ class LoginViewModel @Inject constructor(
 
     fun signIn() {
         val current = mutableState.value
+        if (current.isSubmitting) return
+
         val validation = LoginValidator.validate(current.email, current.password)
         if (validation != LoginValidationResult.Valid) {
             mutableState.update { it.copy(error = validation) }
             return
         }
 
+        mutableState.value = current.copy(
+            isSubmitting = true,
+            error = null,
+            submissionFailed = false,
+        )
         viewModelScope.launch {
-            mutableState.update { it.copy(isSubmitting = true, error = null, submissionFailed = false) }
             when (authRepository.signIn(current.email.trim(), current.password)) {
                 is AppResult.Success -> mutableState.update { it.copy(isSubmitting = false) }
                 is AppResult.Failure -> mutableState.update { it.copy(isSubmitting = false, submissionFailed = true) }

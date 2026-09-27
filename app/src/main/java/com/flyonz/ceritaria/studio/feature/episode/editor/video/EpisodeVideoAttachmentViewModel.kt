@@ -35,11 +35,14 @@ class EpisodeVideoAttachmentViewModel @Inject constructor(
             return
         }
 
-        viewModelScope.launch {
-            mutableState.value = EpisodeVideoAttachmentUiState(
+        mutableState.update {
+            it.copy(
                 status = EpisodeVideoAttachmentStatus.ATTACHING,
                 assetId = assetId,
+                errorCode = null,
             )
+        }
+        viewModelScope.launch {
             when (val result = repository.attachReadyAsset(ownerId, assetId)) {
                 is AppResult.Success -> {
                     mutableState.value = EpisodeVideoAttachmentUiState(
@@ -70,13 +73,13 @@ class EpisodeVideoAttachmentViewModel @Inject constructor(
             return
         }
 
+        mutableState.update {
+            it.copy(
+                previewStatus = EpisodeVideoPreviewStatus.LOADING,
+                previewErrorCode = null,
+            )
+        }
         viewModelScope.launch {
-            mutableState.update {
-                it.copy(
-                    previewStatus = EpisodeVideoPreviewStatus.LOADING,
-                    previewErrorCode = null,
-                )
-            }
             when (val result = repository.getPreview(assetId)) {
                 is AppResult.Success -> {
                     mutableState.update {

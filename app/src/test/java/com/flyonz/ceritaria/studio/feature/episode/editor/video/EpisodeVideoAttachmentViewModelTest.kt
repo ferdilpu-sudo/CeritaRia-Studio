@@ -53,6 +53,30 @@ class EpisodeVideoAttachmentViewModelTest {
         }
 
     @Test
+    fun duplicateAttachWhileSubmittingIsIgnored() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val repository = FakeRepository(
+                attachResult = AppResult.Success(
+                    EpisodeVideoAttachment(
+                        episodeId = "episode-1",
+                        assetId = "asset-1",
+                        replacedAssetId = null,
+                    ),
+                ),
+            )
+            val viewModel = EpisodeVideoAttachmentViewModel(
+                SavedStateHandle(mapOf("episodeId" to "episode-1")),
+                repository,
+            )
+
+            viewModel.attach("asset-1")
+            viewModel.attach("asset-1")
+            advanceUntilIdle()
+
+            assertEquals(1, repository.attachCalls)
+        }
+
+    @Test
     fun conflictBecomesRetryableAttachmentFailure() =
         runTest(mainDispatcherRule.testDispatcher) {
             val viewModel = EpisodeVideoAttachmentViewModel(
@@ -68,6 +92,31 @@ class EpisodeVideoAttachmentViewModelTest {
                 viewModel.state.value.status,
             )
             assertEquals("NOT_ATTACHABLE", viewModel.state.value.errorCode)
+        }
+
+    @Test
+    fun duplicatePreviewWhileLoadingIsIgnored() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val repository = FakeRepository(
+                attachResult = AppResult.Failure(AppError.Unknown),
+                previewResult = AppResult.Success(
+                    EpisodeVideoPreview(
+                        assetId = "asset-1",
+                        url = "https://preview.example/video",
+                        expiresInSeconds = 900,
+                    ),
+                ),
+            )
+            val viewModel = EpisodeVideoAttachmentViewModel(
+                SavedStateHandle(mapOf("episodeId" to "episode-1")),
+                repository,
+            )
+
+            viewModel.preview("asset-1")
+            viewModel.preview("asset-1")
+            advanceUntilIdle()
+
+            assertEquals(1, repository.previewCalls)
         }
 
     @Test
@@ -108,12 +157,20 @@ class EpisodeVideoAttachmentViewModelTest {
         private val previewResult: AppResult<EpisodeVideoPreview> =
             AppResult.Failure(AppError.Unknown),
     ) : EpisodeVideoAssetRepository {
+        var attachCalls = 0
+        var previewCalls = 0
+
         override suspend fun attachReadyAsset(
             episodeId: String,
             assetId: String,
-        ): AppResult<EpisodeVideoAttachment> = attachResult
+        ): AppResult<EpisodeVideoAttachment> {
+            attachCalls += 1
+            return attachResult
+        }
 
-        override suspend fun getPreview(assetId: String): AppResult<EpisodeVideoPreview> =
-            previewResult
+        override suspend fun getPreview(assetId: String): AppResult<EpisodeVideoPreview> {
+            previewCalls += 1
+            return previewResult
+        }
     }
 }

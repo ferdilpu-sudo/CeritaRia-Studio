@@ -54,6 +54,21 @@ class LoginViewModelTest {
         }
 
     @Test
+    fun duplicateSignInWhileSubmittingIsIgnored() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val repository = FakeAuthRepository()
+            val viewModel = LoginViewModel(repository)
+            viewModel.setEmail("admin@example.com")
+            viewModel.setPassword("secret1")
+
+            viewModel.signIn()
+            viewModel.signIn()
+            advanceUntilIdle()
+
+            assertEquals(1, repository.signInCalls)
+        }
+
+    @Test
     fun failedSignInSurfacesSubmissionFailure() =
         runTest(mainDispatcherRule.testDispatcher) {
             val repository = FakeAuthRepository(failSignIn = true)
