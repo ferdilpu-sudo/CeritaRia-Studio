@@ -16,4 +16,10 @@ abstract class MediaModule {
     abstract fun bindVideoInspector(
         implementation: Media3VideoInspector,
     ): VideoInspector
+
+    @Binds
+    @Singleton
+    abstract fun bindVideoSourceAccess(
+        implementation: AndroidVideoSourceAccess,
+    ): VideoSourceAccess
 }
