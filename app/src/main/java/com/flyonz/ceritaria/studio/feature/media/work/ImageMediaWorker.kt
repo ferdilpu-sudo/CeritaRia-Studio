@@ -3,13 +3,13 @@ package com.flyonz.ceritaria.studio.feature.media.work
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
-import androidx.work.Data
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.flyonz.ceritaria.studio.feature.media.domain.ImageMediaRepository
 import com.flyonz.ceritaria.studio.feature.media.domain.ImageMediaSlot
 import com.flyonz.ceritaria.studio.feature.media.source.ImageSourceException
 import com.flyonz.ceritaria.studio.feature.media.source.ImageSourceReader
+import com.flyonz.ceritaria.studio.feature.media.source.PreparedImage
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
@@ -30,11 +30,11 @@ class ImageMediaWorker @AssistedInject constructor(
 
     private suspend fun replace(command: ImageMediaCommand): Result {
         val sourceUri = command.sourceUri ?: return failure(ERROR_INVALID_INPUT)
-        var prepared: com.flyonz.ceritaria.studio.feature.media.source.PreparedImage? = null
+        var prepared: PreparedImage? = null
         return try {
-            setProgress(workDataOf(KEY_PROGRESS to 10))
+            setProgress(workDataOf(KEY_PROGRESS to PREPARE_START))
             prepared = sourceReader.prepare(sourceUri, command.operationId)
-            setProgress(workDataOf(KEY_PROGRESS to 45))
+            setProgress(workDataOf(KEY_PROGRESS to UPLOAD_START))
 
             val publicUrl = repository.replace(
                 ownerId = command.ownerId,
@@ -43,6 +43,13 @@ class ImageMediaWorker @AssistedInject constructor(
                 file = prepared.file,
                 selection = prepared.selection,
                 oldPublicUrl = command.oldPublicUrl,
+                onUploadProgress = { uploadPercent ->
+                    setProgress(
+                        workDataOf(
+                            KEY_PROGRESS to mapUploadProgress(uploadPercent),
+                        ),
+                    )
+                },
             )
             setProgress(workDataOf(KEY_PROGRESS to 100))
             Result.success(
@@ -104,6 +111,11 @@ class ImageMediaWorker @AssistedInject constructor(
         )
     }
 
+    private fun mapUploadProgress(uploadPercent: Int): Int {
+        val bounded = uploadPercent.coerceIn(0, 100)
+        return UPLOAD_START + ((UPLOAD_END - UPLOAD_START) * bounded / 100)
+    }
+
     private fun retryOrFail(errorCode: String): Result =
         if (runAttemptCount < MAX_RETRIES) Result.retry() else failure(errorCode)
 
@@ -127,6 +139,9 @@ class ImageMediaWorker @AssistedInject constructor(
         const val ERROR_CONFIGURATION = "CONFIGURATION"
         const val ERROR_TRANSFER = "TRANSFER"
 
+        private const val PREPARE_START = 10
+        private const val UPLOAD_START = 25
+        private const val UPLOAD_END = 90
         private const val MAX_RETRIES = 3
     }
 }

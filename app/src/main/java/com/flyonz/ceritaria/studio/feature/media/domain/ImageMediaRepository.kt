@@ -10,6 +10,7 @@ interface ImageMediaRepository {
         file: File,
         selection: ImageSelection,
         oldPublicUrl: String?,
+        onUploadProgress: suspend (Int) -> Unit,
     ): String
 
     suspend fun remove(

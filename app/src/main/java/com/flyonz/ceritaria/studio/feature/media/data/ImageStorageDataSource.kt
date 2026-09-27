@@ -7,6 +7,7 @@ interface ImageStorageDataSource {
         bucket: String,
         path: String,
         file: File,
+        onProgress: suspend (Int) -> Unit,
     ): String
 
     suspend fun deleteObject(bucket: String, path: String)

@@ -19,10 +19,16 @@ class ImageMediaRepositoryImpl @Inject constructor(
         file: File,
         selection: ImageSelection,
         oldPublicUrl: String?,
+        onUploadProgress: suspend (Int) -> Unit,
     ): String {
         val contract = slot.contract()
-        val objectPath = "$ownerId/$operationId.${selection.extension}"
-        val newPublicUrl = storage.upload(contract.bucket, objectPath, file)
+        val objectPath = ownerId + "/" + operationId + "." + selection.extension
+        val newPublicUrl = storage.upload(
+            bucket = contract.bucket,
+            path = objectPath,
+            file = file,
+            onProgress = onUploadProgress,
+        )
         try {
             references.updateReference(ownerId, slot, newPublicUrl)
         } catch (error: Throwable) {

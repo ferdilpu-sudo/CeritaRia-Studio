@@ -23,6 +23,7 @@ class ImageMediaRepositoryImplTest {
             file = File("cover.webp"),
             selection = selection(),
             oldPublicUrl = "https://project.supabase.co/storage/v1/object/public/series-media/owner-1/old.webp",
+            onUploadProgress = {},
         )
 
         assertEquals("https://cdn/series-media/owner-1/op-1.webp", result)
@@ -47,6 +48,7 @@ class ImageMediaRepositoryImplTest {
                 file = File("cover.webp"),
                 selection = selection(),
                 oldPublicUrl = "https://project.supabase.co/storage/v1/object/public/series-media/owner-1/old.webp",
+                onUploadProgress = {},
             )
         }
 
@@ -73,8 +75,14 @@ class ImageMediaRepositoryImplTest {
     private class FakeStorage(
         private val events: MutableList<String>,
     ) : ImageStorageDataSource {
-        override suspend fun upload(bucket: String, path: String, file: File): String {
+        override suspend fun upload(
+            bucket: String,
+            path: String,
+            file: File,
+            onProgress: suspend (Int) -> Unit,
+        ): String {
             events += "upload"
+            onProgress(100)
             return "https://cdn/$bucket/$path"
         }
 
