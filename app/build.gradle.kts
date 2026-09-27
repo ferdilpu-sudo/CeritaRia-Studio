@@ -15,6 +15,9 @@ val supabaseUrl = providers.gradleProperty("CERITARIA_SUPABASE_URL")
 val supabaseKey = providers.gradleProperty("CERITARIA_SUPABASE_PUBLISHABLE_KEY")
     .orElse(providers.environmentVariable("CERITARIA_SUPABASE_PUBLISHABLE_KEY"))
     .orElse("")
+val apiBaseUrl = providers.gradleProperty("CERITARIA_API_BASE_URL")
+    .orElse(providers.environmentVariable("CERITARIA_API_BASE_URL"))
+    .orElse("")
 
 android {
     namespace = "com.flyonz.ceritaria.studio"
@@ -30,6 +33,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "SUPABASE_URL", supabaseUrl.get().asBuildConfigString())
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", supabaseKey.get().asBuildConfigString())
+        buildConfigField("String", "API_BASE_URL", apiBaseUrl.get().asBuildConfigString())
     }
 
     buildFeatures {
@@ -82,6 +86,8 @@ dependencies {
     implementation(libs.supabase.postgrest)
     implementation(libs.supabase.storage)
     implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 

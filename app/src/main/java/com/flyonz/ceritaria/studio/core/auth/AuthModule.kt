@@ -12,4 +12,10 @@ abstract class AuthModule {
     @Binds
     @Singleton
     abstract fun bindAuthRepository(implementation: SupabaseAuthRepository): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAccessTokenProvider(
+        implementation: SupabaseAccessTokenProvider,
+    ): AccessTokenProvider
 }

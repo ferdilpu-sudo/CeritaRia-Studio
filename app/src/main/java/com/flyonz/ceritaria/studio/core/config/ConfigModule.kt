@@ -16,4 +16,10 @@ object ConfigModule {
         url = BuildConfig.SUPABASE_URL.trim(),
         publishableKey = BuildConfig.SUPABASE_PUBLISHABLE_KEY.trim(),
     )
+
+    @Provides
+    @Singleton
+    fun provideCeritariaApiConfig(): CeritariaApiConfig = CeritariaApiConfig(
+        baseUrl = BuildConfig.API_BASE_URL.trim().trimEnd('/'),
+    )
 }
