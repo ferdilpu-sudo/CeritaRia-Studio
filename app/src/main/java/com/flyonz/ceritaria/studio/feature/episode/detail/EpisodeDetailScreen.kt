@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -27,7 +28,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.flyonz.ceritaria.studio.R
+import com.flyonz.ceritaria.studio.core.designsystem.component.RemoteArtwork
 import com.flyonz.ceritaria.studio.core.model.PublishStatus
+import com.flyonz.ceritaria.studio.feature.episode.domain.Episode
 import com.flyonz.ceritaria.studio.feature.episode.domain.VideoProvider
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,9 +75,7 @@ private fun ErrorContent(onRetry: () -> Unit) {
 }
 
 @Composable
-private fun EpisodeContent(
-    episode: com.flyonz.ceritaria.studio.feature.episode.domain.Episode,
-) {
+private fun EpisodeContent(episode: Episode) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -82,6 +83,11 @@ private fun EpisodeContent(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        RemoteArtwork(
+            imageUrl = episode.thumbnailUrl,
+            fallbackText = episode.episodeNumber.toString(),
+            modifier = Modifier.fillMaxWidth().height(180.dp),
+        )
         Text(episode.title, style = MaterialTheme.typography.headlineSmall)
         DetailField(stringResource(R.string.status), episode.publishStatus.label())
         DetailField(stringResource(R.string.parent_series), episode.seriesTitle ?: episode.seriesId)

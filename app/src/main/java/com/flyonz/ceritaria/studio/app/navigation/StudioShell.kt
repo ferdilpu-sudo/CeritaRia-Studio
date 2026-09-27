@@ -26,6 +26,7 @@ import com.flyonz.ceritaria.studio.feature.series.detail.SeriesDetailScreen
 import com.flyonz.ceritaria.studio.feature.series.list.SeriesListScreen
 
 private const val SERIES_DETAIL_ROUTE = "series/{seriesId}"
+private const val SERIES_EPISODES_ROUTE = "series/{seriesId}/episodes"
 private const val EPISODE_DETAIL_ROUTE = "episode/{episodeId}"
 
 @Composable
@@ -76,7 +77,17 @@ fun StudioShell(
                 )
             }
             composable(SERIES_DETAIL_ROUTE) {
-                SeriesDetailScreen(contentPadding = padding, onBack = navController::popBackStack)
+                SeriesDetailScreen(
+                    contentPadding = padding,
+                    onBack = navController::popBackStack,
+                    onEpisodesClick = { id -> navController.navigate("series/" + id + "/episodes") },
+                )
+            }
+            composable(SERIES_EPISODES_ROUTE) {
+                EpisodeListScreen(
+                    contentPadding = padding,
+                    onEpisodeClick = { id -> navController.navigate("episode/" + id) },
+                )
             }
             composable(StudioDestination.Episodes.route) {
                 EpisodeListScreen(

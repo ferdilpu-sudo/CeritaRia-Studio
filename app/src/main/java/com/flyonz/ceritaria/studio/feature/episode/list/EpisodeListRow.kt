@@ -1,10 +1,11 @@
 package com.flyonz.ceritaria.studio.feature.episode.list
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -17,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.flyonz.ceritaria.studio.R
+import com.flyonz.ceritaria.studio.core.designsystem.component.RemoteArtwork
 import com.flyonz.ceritaria.studio.core.model.PublishStatus
 import com.flyonz.ceritaria.studio.feature.episode.domain.Episode
 import com.flyonz.ceritaria.studio.feature.episode.domain.VideoProvider
@@ -33,17 +35,17 @@ fun EpisodeListRow(
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = "EP " + episode.episodeNumber,
-                modifier = Modifier.width(64.dp),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
+            RemoteArtwork(
+                imageUrl = episode.thumbnailUrl,
+                fallbackText = episode.episodeNumber.toString(),
+                modifier = Modifier.size(width = 96.dp, height = 54.dp),
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = episode.title,
+                    text = "EP " + episode.episodeNumber + " · " + episode.title,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,

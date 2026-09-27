@@ -1,5 +1,6 @@
 package com.flyonz.ceritaria.studio.feature.episode.list
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flyonz.ceritaria.studio.core.error.AppResult
@@ -21,10 +22,14 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class EpisodeListViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val episodeRepository: EpisodeRepository,
     private val seriesRepository: SeriesRepository,
 ) : ViewModel() {
-    private val mutableState = MutableStateFlow(EpisodeListUiState())
+    private val initialSeriesId = savedStateHandle.get<String>("seriesId")
+    private val mutableState = MutableStateFlow(
+        EpisodeListUiState(seriesId = initialSeriesId),
+    )
     val state: StateFlow<EpisodeListUiState> = mutableState.asStateFlow()
 
     private var searchJob: Job? = null

@@ -26,6 +26,7 @@
     <string name="search_episodes">Cari episode atau slug</string>
     <string name="filter_all">Semua</string>
     <string name="filter_featured">Featured</string>
+    <string name="featured">Featured</string>
     <string name="status">Status</string>
     <string name="status_published">Published</string>
     <string name="status_draft">Draft</string>
@@ -35,6 +36,7 @@
     <string name="facebook">Facebook</string>
     <string name="provider_unknown">Unknown (%1$s)</string>
     <string name="all_series">Semua series</string>
+    <string name="view_series_episodes">Lihat episode series ini</string>
     <string name="load_more">Muat lagi</string>
     <string name="loading_more">Memuat…</string>
     <string name="refresh">Refresh</string>
