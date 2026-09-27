@@ -19,6 +19,24 @@ val supabaseKey = providers.gradleProperty("CERITARIA_SUPABASE_PUBLISHABLE_KEY")
 val apiBaseUrl = providers.gradleProperty("CERITARIA_API_BASE_URL")
     .orElse(providers.environmentVariable("CERITARIA_API_BASE_URL"))
     .orElse("")
+val appVersionCode = providers.gradleProperty("CERITARIA_VERSION_CODE")
+    .orElse(providers.environmentVariable("CERITARIA_VERSION_CODE"))
+    .orElse("1")
+val appVersionName = providers.gradleProperty("CERITARIA_VERSION_NAME")
+    .orElse(providers.environmentVariable("CERITARIA_VERSION_NAME"))
+    .orElse("0.1.0")
+val releaseStoreFile = providers.gradleProperty("CERITARIA_SIGNING_STORE_FILE")
+    .orElse(providers.environmentVariable("CERITARIA_SIGNING_STORE_FILE"))
+    .orElse("")
+val releaseStorePassword = providers.gradleProperty("CERITARIA_SIGNING_STORE_PASSWORD")
+    .orElse(providers.environmentVariable("CERITARIA_SIGNING_STORE_PASSWORD"))
+    .orElse("")
+val releaseKeyAlias = providers.gradleProperty("CERITARIA_SIGNING_KEY_ALIAS")
+    .orElse(providers.environmentVariable("CERITARIA_SIGNING_KEY_ALIAS"))
+    .orElse("")
+val releaseKeyPassword = providers.gradleProperty("CERITARIA_SIGNING_KEY_PASSWORD")
+    .orElse(providers.environmentVariable("CERITARIA_SIGNING_KEY_PASSWORD"))
+    .orElse("")
 
 android {
     namespace = "com.flyonz.ceritaria.studio"
@@ -28,13 +46,40 @@ android {
         applicationId = "com.flyonz.ceritaria.studio"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersionCode.get().toInt()
+        versionName = appVersionName.get()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "SUPABASE_URL", supabaseUrl.get().asBuildConfigString())
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", supabaseKey.get().asBuildConfigString())
         buildConfigField("String", "API_BASE_URL", apiBaseUrl.get().asBuildConfigString())
+    }
+
+    signingConfigs {
+        val storePath = releaseStoreFile.get()
+        val storePasswordValue = releaseStorePassword.get()
+        val keyAliasValue = releaseKeyAlias.get()
+        val keyPasswordValue = releaseKeyPassword.get()
+        if (
+            storePath.isNotBlank() &&
+            storePasswordValue.isNotBlank() &&
+            keyAliasValue.isNotBlank() &&
+            keyPasswordValue.isNotBlank()
+        ) {
+            create("release") {
+                storeFile = file(storePath)
+                storePassword = storePasswordValue
+                keyAlias = keyAliasValue
+                keyPassword = keyPasswordValue
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
+            isMinifyEnabled = false
+        }
     }
 
     buildFeatures {
