@@ -54,6 +54,19 @@ class SeriesEditorViewModelTest {
         }
 
     @Test
+    fun duplicateSaveWhileSubmittingIsIgnored() = runTest(mainDispatcherRule.testDispatcher) {
+        val repository = FakeSeriesRepository()
+        val viewModel = SeriesEditorViewModel(SavedStateHandle(), repository)
+        viewModel.setForm(validForm())
+
+        viewModel.save()
+        viewModel.save()
+        advanceUntilIdle()
+
+        assertEquals(1, repository.saveCalls)
+    }
+
+    @Test
     fun duplicateSlugMapsToEditorError() = runTest(mainDispatcherRule.testDispatcher) {
         val repository = FakeSeriesRepository(
             saveResult = AppResult.Failure(AppError.Conflict),

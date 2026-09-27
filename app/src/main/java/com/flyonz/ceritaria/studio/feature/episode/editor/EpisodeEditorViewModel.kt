@@ -96,8 +96,8 @@ class EpisodeEditorViewModel @Inject constructor(
             return
         }
 
+        mutableState.value = current.copy(isSaving = true, saveError = null)
         viewModelScope.launch {
-            mutableState.update { it.copy(isSaving = true, saveError = null) }
             val command = current.form.toSaveCommand(episodeId, existingPublishedAt)
             when (val result = episodeRepository.saveEpisode(command)) {
                 is AppResult.Success -> onSaveSuccess(result.value)

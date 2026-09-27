@@ -81,8 +81,8 @@ class SeriesEditorViewModel @Inject constructor(
             return
         }
 
+        mutableState.value = current.copy(isSaving = true, saveError = null)
         viewModelScope.launch {
-            mutableState.update { it.copy(isSaving = true, saveError = null) }
             val command = current.form.toSaveCommand(seriesId, existingPublishedAt)
             when (val result = repository.saveSeries(command)) {
                 is AppResult.Success -> {

@@ -66,6 +66,24 @@ class EpisodeEditorViewModelTest {
     }
 
     @Test
+    fun duplicateSaveWhileSubmittingIsIgnored() = runTest(mainDispatcherRule.testDispatcher) {
+        val episodeRepository = FakeEpisodeRepository()
+        val viewModel = EpisodeEditorViewModel(
+            SavedStateHandle(mapOf("seriesId" to REQUIRED_SERIES_ID)),
+            episodeRepository,
+            FakeSeriesRepository(base = listOf(series(REQUIRED_SERIES_ID))),
+        )
+        advanceUntilIdle()
+        viewModel.setForm(validForm())
+
+        viewModel.save()
+        viewModel.save()
+        advanceUntilIdle()
+
+        assertEquals(1, episodeRepository.saveCalls)
+    }
+
+    @Test
     fun r2AttachmentSyncsPersistedMediaButPreservesOtherDirtyEdits() =
         runTest(mainDispatcherRule.testDispatcher) {
             val viewModel = EpisodeEditorViewModel(

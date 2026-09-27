@@ -37,10 +37,12 @@ class EpisodeReorderViewModel @Inject constructor(
         val current = mutableState.value
         if (current.isSaving || !current.isDirty) return
 
+        mutableState.value = current.copy(
+            isSaving = true,
+            saveError = null,
+            saveSucceeded = false,
+        )
         viewModelScope.launch {
-            mutableState.update {
-                it.copy(isSaving = true, saveError = null, saveSucceeded = false)
-            }
             val ids = current.episodes.map { it.id }
             when (val result = repository.reorderEpisodes(seriesId, ids)) {
                 is AppResult.Success -> onSaveSuccess(ids)

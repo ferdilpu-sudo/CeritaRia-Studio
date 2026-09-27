@@ -65,6 +65,26 @@ class EpisodeReorderViewModelTest {
         }
 
     @Test
+    fun duplicateSaveWhileSubmittingIsIgnored() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val repository = FakeEpisodeRepository(
+                mutableListOf(episode("1", 1), episode("2", 2), episode("3", 3)),
+            )
+            val viewModel = EpisodeReorderViewModel(
+                SavedStateHandle(mapOf("seriesId" to SERIES_ID)),
+                repository,
+            )
+            advanceUntilIdle()
+            viewModel.moveDown(0)
+
+            viewModel.save()
+            viewModel.save()
+            advanceUntilIdle()
+
+            assertEquals(1, repository.reorderCalls)
+        }
+
+    @Test
     fun conflictSurfacesRetryableSaveError() = runTest(mainDispatcherRule.testDispatcher) {
         val repository = FakeEpisodeRepository(
             mutableListOf(episode("1", 1), episode("2", 2)),
@@ -89,6 +109,7 @@ class EpisodeReorderViewModelTest {
         private val reorderResult: AppResult<Unit> = AppResult.Success(Unit),
     ) : EpisodeRepository {
         var lastReorderIds: List<String>? = null
+        var reorderCalls = 0
 
         override suspend fun getEpisodes(query: EpisodeQuery): AppResult<PagedResult<Episode>> =
             AppResult.Success(PagedResult(emptyList(), query.page, false))
@@ -109,6 +130,7 @@ class EpisodeReorderViewModelTest {
             seriesId: String,
             orderedEpisodeIds: List<String>,
         ): AppResult<Unit> {
+            reorderCalls += 1
             lastReorderIds = orderedEpisodeIds
             if (reorderResult is AppResult.Success) {
                 val byId = episodes.associateBy { it.id }
