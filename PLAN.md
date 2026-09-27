@@ -788,25 +788,66 @@ Production completion remains pending:
 
 ---
 
-## Phase 8 — Analytics
+## Phase 8 — Analytics 🟡 CODE / CI PASS · PRODUCTION DATA SMOKE PENDING
 
-### Scope
+Phase 8 now exposes the existing first-party Ceritaria analytics through the Android admin app without downloading raw event history.
 
-Read-only operational analytics.
+### Implementation status
 
-### Tasks
+- [x] Android analytics domain/data/repository boundary;
+- [x] one admin-only `get_analytics_dashboard` RPC call per report load;
+- [x] timezone fixed to `Asia/Jakarta` to match the existing web admin contract;
+- [x] 7 / 30 / 90 day range selector;
+- [x] today pageviews and visitors;
+- [x] period pageviews, visitors, sessions, and total events;
+- [x] 24-hour aggregated traffic strip;
+- [x] top pages with views and visitors;
+- [x] device breakdown;
+- [x] referrer breakdown;
+- [x] player interaction events;
+- [x] loading, empty, initial-error, and refresh-error states;
+- [x] pull-to-refresh retains the last successful report if refresh fails;
+- [x] stale range requests are cancelled before a newer range wins;
+- [x] DTO/domain mapper coverage;
+- [x] ViewModel state/range/refresh coverage;
+- [x] no raw `analytics_events` history downloaded by Android;
+- [x] final Android Verify run `36326340217` succeeded.
 
-- views/pageviews;
-- unique visitors where supported;
-- player events;
-- top series/episodes/pages where existing backend supports them;
-- time range selector;
-- loading/empty/error states;
-- use safe views/RPCs instead of downloading raw event history where possible.
+### Backend support boundary
+
+The existing RPC returns:
+
+```text
+summary
+hourly
+topPages
+devices
+referrers
+events
+```
+
+It does not currently return a dedicated top-series or top-episode ranking. Android therefore renders `topPages` rather than inventing an unsupported content ranking.
+
+Realtime visitor presence also remains outside this Phase 8 Android scope; the existing web admin owns that separate Supabase Presence view.
+
+### Error behavior
+
+- first-load failure shows a retry action;
+- pull-to-refresh failure keeps the previous report visible and shows a compact warning;
+- changing range cancels the previous load job;
+- infrastructure errors are mapped through the repository boundary rather than exposed as raw PostgREST text.
 
 ### Exit gate
 
-Admin can inspect supported Ceritaria metrics without Android receiving unnecessary raw analytics data.
+Code/build gate: **PASS**.
+
+Production completion remains pending a configured admin smoke test against the real Supabase project:
+
+1. open Analytics as an authorized admin;
+2. verify 7/30/90 day reports match the web admin report for the same range/timezone;
+3. verify top pages/device/referrer/player events are populated when data exists;
+4. verify empty range behavior where applicable;
+5. verify unauthorized/non-admin access remains rejected by the RPC/RLS boundary.
 
 ---
 
