@@ -176,8 +176,11 @@ Photo Picker / document media selection
  -> local Room state records progress/resume metadata
  -> backend completes/verifies object
  -> media asset becomes READY
+ -> optional short-lived admin preview
+ -> explicit trusted attachment mutation
  -> episode reference changes atomically
- -> old asset is cleaned only when safe
+ -> old R2 asset is marked REPLACED
+ -> old object is cleaned only after the swap succeeds
 ```
 
 Encoding and transfer are separate jobs and separate state machines.
@@ -187,6 +190,8 @@ Room stores only operational video-job state; it does not duplicate the producti
 Multipart upload state has a dedicated owner and is persisted when resume/recovery requires it.
 
 Never ship R2 account secret/access key in Android.
+
+Upload READY and episode attachment are separate contracts. Low-level transfer/finalization never changes `episodes.video_provider`, `video_url`, `video_asset_id`, or publish state. Only the trusted attachment contract may activate a READY R2 asset.
 
 
 ## 10. Process recovery and URI ownership

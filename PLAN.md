@@ -709,29 +709,82 @@ A READY asset is intentionally **not attached to the episode in Phase 6**. That 
 
 ---
 
-## Phase 7 — Episode Video Integration
+## Phase 7 — Episode Video Integration 🟡 CODE / CI PASS · PRODUCTION MIGRATION + SMOKE PENDING
 
-### Scope
+Phase 7 now connects verified READY R2 assets to real episodes through an explicit, trusted attachment step. Upload READY and episode attachment remain separate states.
 
-Connect READY uploaded assets to real episode editing/publishing.
+### Backend / web implementation
 
-### Tasks
+- [x] migration 010 adds `episodes.video_asset_id`;
+- [x] migration 010 extends provider constraint to `youtube|facebook|r2`;
+- [x] legacy YouTube/Facebook rows keep URL-backed behavior;
+- [x] R2 rows require `video_url = null` and a READY asset reference;
+- [x] trigger rejects non-READY or cross-episode R2 assets;
+- [x] admin RPC atomically attaches a READY asset to the episode;
+- [x] previous attached R2 asset is marked `REPLACED` only after the new reference succeeds;
+- [x] old replaced R2 object cleanup is best-effort after the database swap;
+- [x] upload completion/finalization does not attach or publish an episode;
+- [x] admin-only short-lived GET preview URL for READY assets;
+- [x] public R2 playback is supported for attached published episodes;
+- [x] public asset RLS exposes only READY assets attached to published content;
+- [x] backend preview contract CI run `36321253749` passed typecheck, lint, and tests.
 
-- preserve existing YouTube/Facebook editing;
-- support R2 provider only after schema/server contract is verified;
-- show source metadata and output metadata;
-- preview READY replacement;
-- attach READY asset to episode;
-- replace video atomically;
-- keep old production video active until replacement finalization succeeds;
-- clean orphaned/replaced objects safely;
-- disable publish when a required selected local video is not READY;
-- ensure upload completion alone does not auto-publish an episode;
-- expose Retry/Replace/Cancel states clearly.
+### Android implementation
+
+- [x] R2 provider and `videoAssetId` supported in episode read/write models;
+- [x] YouTube/Facebook editing remains available for legacy/external rows;
+- [x] remote upload READY remains distinct from attachment;
+- [x] READY asset can be previewed through a short-lived admin URL;
+- [x] READY asset can be explicitly attached from Episode editor;
+- [x] attachment has separate `IDLE/ATTACHING/ATTACHED/FAILED` state;
+- [x] failed attachment leaves the current production video untouched;
+- [x] successful attachment synchronizes editor provider to R2 without clearing unrelated dirty edits;
+- [x] episode detail/list render R2 provider safely;
+- [x] retry/replace/cancel upload flows remain intact;
+- [x] local encode/upload completion never auto-publishes;
+- [x] Android preview/attachment Verify step passed in CI run `36321377376`.
+
+### Runtime replacement flow
+
+```text
+existing episode video remains active
+  -> select local replacement
+  -> inspect / encode when required
+  -> upload
+  -> server verify
+  -> remote asset READY
+  -> optional admin preview
+  -> explicit Attach to episode
+  -> atomic DB swap to R2 asset
+  -> previous R2 asset becomes REPLACED
+  -> best-effort old-object cleanup
+```
+
+`UPLOAD_READY` means the remote object is verified. It does **not** mean the episode uses it.
+
+### Publish behavior
+
+A pending replacement does not invalidate an already-valid active video. Existing published content stays publishable while a new replacement is prepared because the old source remains authoritative until attachment succeeds.
+
+The normal episode validator still requires the active form itself to contain a valid source. For R2, that means a valid attached asset ID; for YouTube/Facebook, that means a valid provider URL.
 
 ### Exit gate
 
-An episode can use a verified R2 video asset while maintaining its existing episode identity and preserving a previously valid video if replacement fails.
+Code/build gate: **PASS**.
+
+Production completion remains pending:
+
+1. apply migrations 006–010 to the real Supabase project in order;
+2. configure production R2 upload credentials/policy values;
+3. configure `R2_VIDEO_PUBLIC_BASE_URL` and preview TTL;
+4. smoke-test unauthorized/non-admin rejection;
+5. verify READY asset preview;
+6. attach R2 over an existing YouTube/Facebook episode and confirm the old video stays active until attachment;
+7. replace one attached R2 asset with another and verify atomic swap + safe cleanup;
+8. verify a failed attachment leaves the previous video unchanged;
+9. publish/view an attached R2 episode through the public web player;
+10. verify unpublished/deleted content does not expose its R2 asset publicly;
+11. verify Android list/detail/editor reload the attached R2 source correctly.
 
 ---
 

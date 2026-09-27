@@ -243,6 +243,7 @@ Video
 [ Select video ]
 or
 Provider: YouTube / Facebook for legacy/external content
+Local R2 replacement uses Select video -> Upload -> READY -> Preview -> Attach
 ```
 
 After local selection:
@@ -293,7 +294,11 @@ Completed:
 ``` text
 Video ready
 186 MB · R2
-[ Preview ] [ Replace ]
+[ Preview ] [ Pasang ke episode ]
+
+After attachment:
+Video R2 aktif
+[ Preview ] [ Ganti video ]
 ```
 
 Rules: - Encoding, Uploading, Verifying, and READY must have distinct status labels. - Do
@@ -304,5 +309,4 @@ remains active until replacement is fully verified. - Failed upload offers
 Retry and keeps valid encoded output when possible. - Resumable/multipart
 progress should preserve transferred progress where the backend contract
 supports it. - Insufficient local storage must be detected before starting
-a large encode when estimable. - Publish action is disabled while a required
-local video is not READY.
+a large encode when estimable. - A form with no valid active video source cannot be published. A pending replacement does not block an already-valid existing source because the old video remains active until explicit attachment succeeds.

@@ -150,18 +150,18 @@ Exact persistence fields must follow verified production schema.
 
 ### FR-10 Video providers
 
-The initial production release supports editing the current provider contract, including
-YouTube-first and legacy Facebook records.
+The release preserves YouTube and Facebook URL-backed episodes and adds R2 asset-backed episodes after the committed server/database migration is applied.
 
-Direct binary video upload is part of the implementation baseline, but it must not ship
-until the secure server-mediated R2 authorization, verification, and finalization contract is available.
+R2 is not selected by typing an object URL or asset ID. The supported workflow is local preparation -> secure upload -> server verification -> READY -> optional preview -> explicit atomic attachment.
+
+Upload READY alone does not change the episode provider and does not publish content.
 
 ### FR-11 Video encoding
 
 -   Use AndroidX Media3 Transformer as the primary transformation
     pipeline.
 -   Prefer hardware MediaCodec encoding when supported by the device.
--   Never encode on the main thread.
+-   Never perform blocking/manual codec work on the main thread. Media3 Transformer lifecycle/control calls remain on its required application looper while Media3 owns the codec pipeline.
 -   Inspect codec, resolution, fps, duration, orientation and file size
     before deciding to transcode.
 -   Default output: MP4, H.264/AVC, AAC, max 1080×1920 portrait, max 30
@@ -185,6 +185,8 @@ until the secure server-mediated R2 authorization, verification, and finalizatio
 -   Retry recoverable failures without re-encoding when output still
     exists.
 -   Verify server acceptance before attaching asset to episode.
+-   Allow an authorized admin to preview a READY replacement through a short-lived server-signed URL.
+-   Keep upload READY and episode attachment as separate states; attachment is explicit and atomic.
 -   Replacing a video keeps the same episode identity.
 -   Failed upload must not overwrite the currently valid episode video.
 

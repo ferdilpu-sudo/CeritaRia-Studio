@@ -1,13 +1,14 @@
 # Ceritaria Studio Android — Verified Data Contract
 
-Status: **Phase 0 verified against production repository**  
+Status: **Phase 0 production audit + repository-verified R2 extension through migration 010**  
 Audit date: **2026-09-27**  
 Source repository: `ferdilpu-sudo/ceritaria` branch `main`  
-Audited tree SHA: `c7ea336224a5baaf37af3645ff375981051a8b31`
+Phase 0 audited tree SHA: `c7ea336224a5baaf37af3645ff375981051a8b31`  
+R2 extension: migrations `006` through `010` committed; production application/smoke still pending.
 
-This document is the Android-facing data contract for the current Ceritaria production schema.
+This document preserves the Phase 0 production audit and also records the R2 extension now committed in the Ceritaria repository. Items marked **VERIFIED-MIGRATION** are implemented in migrations/server code but must not be assumed live in production until those migrations and environment values are applied and smoke-tested.
 
-Do not invent fields that are not listed as VERIFIED. Future R2 structures remain PROPOSED until a production migration exists.
+Do not invent fields outside the verified base contract or the committed migration contract.
 
 ---
 
@@ -15,6 +16,7 @@ Do not invent fields that are not listed as VERIFIED. Future R2 structures remai
 
 - **VERIFIED** — present in audited production migrations/code.
 - **VERIFIED-BEHAVIOR** — behavior confirmed from current CMS/public code.
+- **VERIFIED-MIGRATION** — committed migration/server contract; live production application still requires verification.
 - **PROPOSED** — required by the Studio roadmap but not present in production yet.
 - **UNSUPPORTED** — not implemented by the current production contract.
 
@@ -49,7 +51,7 @@ admin dashboard
 get_analytics_dashboard RPC
 ```
 
-There is currently no production `video_assets` table.
+At the Phase 0 audit there was no `video_assets` table. Migrations 006–010 now define the repository-verified R2 extension shown in section 15.
 
 ---
 
@@ -192,7 +194,7 @@ Provider constraint after migration 002:
 video_provider IN ('youtube', 'facebook')
 ```
 
-Therefore current production cannot accept `r2` as a provider value.
+That constraint describes the Phase 0/pre-migration schema. Migration 010 extends the target schema to `youtube|facebook|r2` and adds `episodes.video_asset_id`; production must be migrated before Android uses the R2 path.
 
 ### Episode validation
 
@@ -207,8 +209,10 @@ Current CMS validation:
 - short synopsis: max 320;
 - recap: max 20000;
 - highlights form: max 4000 chars, converted to max 12 non-empty lines;
-- provider: `youtube` or `facebook`;
-- video URL: required, max 2048, provider-specific validation;
+- pre-migration provider: `youtube` or `facebook`;
+- post-migration provider: `youtube`, `facebook`, or `r2`;
+- YouTube/Facebook video URL: required, max 2048, provider-specific validation;
+- R2 source: URL is null and `video_asset_id` must reference a READY asset belonging to the episode;
 - duration: positive integer, max 86400 seconds;
 - SEO title: max 200;
 - SEO description: max 320.
@@ -476,22 +480,38 @@ Android Phase 4 must match this production behavior unless the storage contract 
 
 ## 12. Video providers
 
-Status: **VERIFIED**
+Status: **VERIFIED base + VERIFIED-MIGRATION R2 extension**
 
-Current production provider values:
+Phase 0 production values were:
 
 ```text
 youtube
 facebook
 ```
 
-New web CMS episodes default to `youtube`.
+Migration 010 extends the target provider constraint to:
 
-Facebook remains valid for legacy/editable rows.
+```text
+youtube
+facebook
+r2
+```
 
-Android domain should still include an UNKNOWN fallback for forward-compatible reads, but UNKNOWN is never written back without understanding the value.
+Source invariants after migration 010:
 
-R2 is not currently a valid production provider.
+```text
+youtube/facebook:
+  video_url IS NOT NULL
+  video_asset_id IS NULL
+
+r2:
+  video_url IS NULL
+  video_asset_id IS NOT NULL
+```
+
+A trigger additionally requires an R2 asset to be `READY` and to belong to the same episode.
+
+Studio does not manually invent R2 identifiers. The intended path is upload -> verify READY -> optional preview -> trusted attach endpoint/RPC. UNKNOWN remains a read-only forward-compatibility fallback and is never written without understanding it.
 
 ---
 
@@ -577,57 +597,106 @@ The audited Next.js application currently exposes an API health route:
 GET /api/health
 ```
 
-No R2/video upload API routes exist in the audited tree.
+No R2/video upload API routes existed in the Phase 0 audited tree.
 
-Content CRUD in the web CMS currently uses server actions backed by the normal authenticated Supabase client.
+The current repository extension now exposes authenticated admin routes for:
+
+```text
+POST /api/video-uploads
+GET  /api/video-uploads/{sessionId}
+POST /api/video-uploads/{sessionId}/parts
+POST /api/video-uploads/{sessionId}/complete
+POST /api/video-uploads/{sessionId}/finalize
+POST /api/video-uploads/{sessionId}/cancel
+
+GET  /api/video-assets/{assetId}/preview
+POST /api/episodes/{episodeId}/video-assets/{assetId}/attach
+```
+
+The upload API never publishes or attaches an episode merely because an object became READY. Preview is admin-only and short-lived. Attachment is a separate explicit mutation.
+
+Content CRUD in the web CMS otherwise continues to use authenticated Supabase/server-action boundaries.
 
 ---
 
-## 15. R2 production extension
+## 15. R2 repository extension
 
-Status: **PROPOSED — MIGRATION + SERVER CONTRACT REQUIRED**
+Status: **VERIFIED-MIGRATION — migrations 006–010 committed; production apply/smoke pending**
 
-Phase 0 confirmed that production does **not** currently contain:
+### video_assets
 
-- a `video_assets` table;
-- an R2 provider value;
-- an upload-session table;
-- R2 upload/finalization endpoints.
-
-At minimum, production must be extended before R2 video ships.
-
-Preferred direction:
+Migration 006 defines:
 
 ```text
-video_assets
-- id
-- episode_id
-- object_key
-- mime_type
-- size_bytes
-- checksum
-- upload_status
-- processing_status
-- created_at
-- verified_at
-- replaced_at?
+id uuid PK
+episode_id uuid -> episodes(id)
+status PENDING|UPLOADING|UPLOADED|VERIFYING|READY|FAILED|CANCELLED|REPLACED
+object_key text unique
+mime_type video/mp4
+expected_size_bytes bigint
+actual_size_bytes bigint?
+etag text?
+checksum_sha256 char(64)?
+created_by uuid -> auth.users(id)
+ready_at timestamptz?
+created_at timestamptz
+updated_at timestamptz
 ```
 
-Exact SQL is intentionally deferred until the playback/delivery URL contract and final server API are designed.
+Admin RLS controls mutation. Migration 010 additionally allows public SELECT only for a READY asset that is attached to a currently published, non-deleted episode whose series is also published and non-deleted.
 
-Required server capabilities:
+### video_upload_sessions
+
+Migrations 006–009 define:
 
 ```text
-create upload session
-authorize/initiate single or multipart transfer
-complete multipart transfer
-verify object
-mark asset READY
-cancel/abort incomplete upload
-atomically attach/replace READY episode media
+id uuid PK
+asset_id uuid unique -> video_assets(id)
+mode SINGLE|MULTIPART
+status CREATED|UPLOADING|COMPLETING|UPLOADED|VERIFYING|READY|CANCELLED|FAILED|EXPIRED
+r2_upload_id text?
+part_size_bytes bigint?
+part_count int?
+expires_at timestamptz
+created_by uuid -> auth.users(id)
+created_at timestamptz
+updated_at timestamptz
 ```
 
-Permanent R2 credentials remain server-side.
+Multipart rows require upload ID, part size and part count. The final part-size type is `bigint` after migration 009.
+
+### Episode attachment after migration 010
+
+Migration 010 adds:
+
+```text
+episodes.video_asset_id uuid? -> video_assets(id)
+episodes.video_url becomes nullable
+video_provider IN ('youtube','facebook','r2')
+```
+
+The source check ensures legacy providers remain URL-backed while R2 rows are asset-backed.
+
+`attach_ready_video_asset(episodeId, assetId)` is the atomic attachment RPC. It locks/validates the READY target, swaps the episode source, marks a previous R2 asset `REPLACED`, and returns the previous asset ID. Server code performs old-object cleanup only after the database swap succeeds.
+
+### Server state transition RPCs
+
+Committed migrations include explicit RPCs for:
+
+```text
+create upload records
+mark transfer uploaded
+finalize verified READY
+fail upload
+cancel upload
+attach READY asset
+```
+
+Permanent R2 credentials and request signing remain server-side. Android receives only short-lived operation URLs.
+
+### Production warning
+
+Repository verification does not prove migrations 006–010 are already applied to the live Supabase project. Production use of R2 must remain gated until migration order, RLS, endpoints, R2 environment values, preview, attachment and public playback have been smoke-tested.
 
 ---
 

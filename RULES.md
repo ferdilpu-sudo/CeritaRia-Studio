@@ -302,6 +302,8 @@ Additional limits:
 - R2 request signing belongs on the trusted server, never Android.
 - Low-level byte transfer never mutates episode publish state.
 - Database/media finalization is owned by the trusted server/repository contract, not the byte-transfer class.
+- Remote asset `READY` never implies episode attachment. Only the dedicated trusted attachment contract may switch an episode to R2.
+- Preview URLs are short-lived operation data and must not be persisted as episode/catalog state.
 - Temporary file cleanup has its own owner.
 - Encoding progress state and upload progress state are different types.
 - Room is required for durable `VideoJob` and multipart/recovery metadata.
