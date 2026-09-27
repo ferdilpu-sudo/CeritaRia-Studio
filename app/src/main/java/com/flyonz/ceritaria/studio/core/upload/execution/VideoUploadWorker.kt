@@ -5,6 +5,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.flyonz.ceritaria.studio.core.database.videojob.VideoJobRepository
 import com.flyonz.ceritaria.studio.core.upload.UploadProgress
 import com.flyonz.ceritaria.studio.core.upload.VideoUploadRepository
 import dagger.assisted.Assisted
@@ -16,6 +17,7 @@ class VideoUploadWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted params: WorkerParameters,
     private val repository: VideoUploadRepository,
+    private val jobs: VideoJobRepository,
     private val notificationFactory: VideoUploadNotificationFactory,
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
@@ -45,10 +47,15 @@ class VideoUploadWorker @AssistedInject constructor(
         } catch (error: CancellationException) {
             throw error
         } catch (_: Throwable) {
-            if (runAttemptCount < MAX_ATTEMPTS) {
+            val errorCode = jobs.getById(jobId)?.lastErrorCode
+                ?: ERROR_UPLOAD_FAILED
+            if (
+                runAttemptCount < MAX_ATTEMPTS &&
+                VideoUploadRetryPolicy.isRetryable(errorCode)
+            ) {
                 Result.retry()
             } else {
-                Result.failure(workDataOf(KEY_ERROR to ERROR_UPLOAD_FAILED))
+                Result.failure(workDataOf(KEY_ERROR to errorCode))
             }
         }
     }
