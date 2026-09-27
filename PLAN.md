@@ -593,7 +593,7 @@ Room is the durable operational source of truth. Process death while encoding re
 
 ### Exit gate
 
-Code/build gate: **PASS after final Phase 5 CI**. Real-device behavior gate: **PENDING**.
+Code/build gate: **PASS**. GitHub Actions run `36308774838` completed successfully. Real-device behavior gate: **PENDING**.
 
 No R2 credential is required for this phase.
 
