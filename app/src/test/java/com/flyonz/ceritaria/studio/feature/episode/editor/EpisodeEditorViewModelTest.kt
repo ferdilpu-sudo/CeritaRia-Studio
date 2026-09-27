@@ -172,6 +172,7 @@ private fun episode(command: EpisodeSaveCommand) = Episode(
     videoProvider = when (command.videoProvider) {
         EditableVideoProvider.YOUTUBE -> VideoProvider.YouTube
         EditableVideoProvider.FACEBOOK -> VideoProvider.Facebook
+        EditableVideoProvider.R2 -> VideoProvider.R2
     },
     videoUrl = command.videoUrl,
     thumbnailUrl = command.thumbnailUrl,
