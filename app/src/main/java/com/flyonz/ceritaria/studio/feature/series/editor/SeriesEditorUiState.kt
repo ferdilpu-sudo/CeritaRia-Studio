@@ -3,6 +3,7 @@ package com.flyonz.ceritaria.studio.feature.series.editor
 data class SeriesEditorUiState(
     val isLoading: Boolean = true,
     val isEdit: Boolean = false,
+    val recordId: String? = null,
     val form: SeriesEditorForm = SeriesEditorForm(),
     val initialForm: SeriesEditorForm = SeriesEditorForm(),
     val validationErrors: Map<SeriesEditorField, SeriesValidationIssue> = emptyMap(),

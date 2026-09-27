@@ -15,16 +15,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.flyonz.ceritaria.studio.R
+import com.flyonz.ceritaria.studio.feature.media.domain.ImageMediaSlot
+import com.flyonz.ceritaria.studio.feature.media.presentation.ImageMediaUiState
+import com.flyonz.ceritaria.studio.feature.media.presentation.ImageMediaViewModel
 
 @Composable
 fun SeriesEditorBody(
     state: SeriesEditorUiState,
     viewModel: SeriesEditorViewModel,
+    mediaStates: Map<ImageMediaSlot, ImageMediaUiState>,
+    mediaViewModel: ImageMediaViewModel,
 ) {
     when {
         state.isLoading -> CircularProgressIndicator(modifier = Modifier.padding(24.dp))
         state.loadFailed -> LoadFailed(onRetry = viewModel::retry)
-        else -> SeriesEditorFormContent(state = state, viewModel = viewModel)
+        else -> SeriesEditorFormContent(
+            state = state,
+            viewModel = viewModel,
+            mediaStates = mediaStates,
+            mediaViewModel = mediaViewModel,
+        )
     }
 }
 
@@ -42,6 +52,8 @@ private fun LoadFailed(onRetry: () -> Unit) {
 private fun SeriesEditorFormContent(
     state: SeriesEditorUiState,
     viewModel: SeriesEditorViewModel,
+    mediaStates: Map<ImageMediaSlot, ImageMediaUiState>,
+    mediaViewModel: ImageMediaViewModel,
 ) {
     LazyColumn(
         contentPadding = PaddingValues(20.dp),
@@ -57,7 +69,14 @@ private fun SeriesEditorFormContent(
         }
         item { SeriesIdentitySection(state.form, state.validationErrors, viewModel::setForm) }
         item { SeriesStorySection(state.form, state.validationErrors, viewModel::setForm) }
-        item { SeriesMediaUrlSection(state.form, state.validationErrors, viewModel::setForm) }
+        item {
+            SeriesArtworkSection(
+                recordId = state.recordId,
+                form = state.form,
+                mediaStates = mediaStates,
+                mediaViewModel = mediaViewModel,
+            )
+        }
         item { SeriesPublishingSection(state.form, state.validationErrors, viewModel::setForm) }
         item {
             Button(

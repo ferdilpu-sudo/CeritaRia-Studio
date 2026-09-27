@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flyonz.ceritaria.studio.core.error.AppError
 import com.flyonz.ceritaria.studio.core.error.AppResult
+import com.flyonz.ceritaria.studio.feature.media.domain.ImageMediaSlot
 import com.flyonz.ceritaria.studio.feature.series.domain.SeriesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
@@ -51,6 +52,23 @@ class SeriesEditorViewModel @Inject constructor(
 
     fun retry() = load()
 
+    fun applyMediaReference(slot: ImageMediaSlot, publicUrl: String?) {
+        val value = publicUrl.orEmpty()
+        mutableState.update { current ->
+            when (slot) {
+                ImageMediaSlot.SERIES_COVER -> current.copy(
+                    form = current.form.copy(coverUrl = value),
+                    initialForm = current.initialForm.copy(coverUrl = value),
+                )
+                ImageMediaSlot.SERIES_HERO -> current.copy(
+                    form = current.form.copy(heroUrl = value),
+                    initialForm = current.initialForm.copy(heroUrl = value),
+                )
+                ImageMediaSlot.EPISODE_THUMBNAIL -> current
+            }
+        }
+    }
+
     fun save() {
         val current = mutableState.value
         if (current.isSaving || current.isLoading) return
@@ -73,6 +91,8 @@ class SeriesEditorViewModel @Inject constructor(
                     mutableState.update {
                         it.copy(
                             isSaving = false,
+                            isEdit = true,
+                            recordId = result.value.id,
                             form = normalized,
                             initialForm = normalized,
                         )
@@ -104,6 +124,7 @@ class SeriesEditorViewModel @Inject constructor(
                         mutableState.value = SeriesEditorUiState(
                             isLoading = false,
                             isEdit = true,
+                            recordId = series.id,
                             form = form,
                             initialForm = form,
                         )

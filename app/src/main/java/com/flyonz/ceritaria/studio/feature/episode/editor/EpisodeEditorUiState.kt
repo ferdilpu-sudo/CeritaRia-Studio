@@ -8,6 +8,7 @@ data class EpisodeSeriesOption(
 data class EpisodeEditorUiState(
     val isLoading: Boolean = true,
     val isEdit: Boolean = false,
+    val recordId: String? = null,
     val form: EpisodeEditorForm = EpisodeEditorForm(),
     val initialForm: EpisodeEditorForm = EpisodeEditorForm(),
     val seriesOptions: List<EpisodeSeriesOption> = emptyList(),

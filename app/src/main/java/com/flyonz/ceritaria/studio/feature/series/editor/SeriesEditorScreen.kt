@@ -25,6 +25,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.flyonz.ceritaria.studio.R
+import com.flyonz.ceritaria.studio.feature.media.presentation.ImageMediaEffect
+import com.flyonz.ceritaria.studio.feature.media.presentation.ImageMediaViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,13 +35,22 @@ fun SeriesEditorScreen(
     onBack: () -> Unit,
     onSaved: (String) -> Unit,
     viewModel: SeriesEditorViewModel = hiltViewModel(),
+    mediaViewModel: ImageMediaViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val mediaState by mediaViewModel.state.collectAsStateWithLifecycle()
     var showDiscardDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             if (effect is SeriesEditorEffect.Saved) onSaved(effect.seriesId)
+        }
+    }
+    LaunchedEffect(mediaViewModel, viewModel) {
+        mediaViewModel.effects.collect { effect ->
+            if (effect is ImageMediaEffect.ReferenceUpdated) {
+                viewModel.applyMediaReference(effect.slot, effect.publicUrl)
+            }
         }
     }
     BackHandler(enabled = state.isDirty && !state.isSaving) {
@@ -67,7 +78,12 @@ fun SeriesEditorScreen(
                 }
             },
         )
-        SeriesEditorBody(state = state, viewModel = viewModel)
+        SeriesEditorBody(
+            state = state,
+            viewModel = viewModel,
+            mediaStates = mediaState,
+            mediaViewModel = mediaViewModel,
+        )
     }
 
     if (showDiscardDialog) {

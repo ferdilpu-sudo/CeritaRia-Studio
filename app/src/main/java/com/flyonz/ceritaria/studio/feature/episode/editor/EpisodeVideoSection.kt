@@ -29,21 +29,10 @@ fun EpisodeVideoSection(
             issue = errors[EpisodeEditorField.VIDEO_URL],
         )
         EpisodeEditorTextField(
-            value = form.thumbnailUrl,
-            onValueChange = { onChange(form.copy(thumbnailUrl = it)) },
-            label = stringResource(R.string.thumbnail_url),
-            issue = errors[EpisodeEditorField.THUMBNAIL_URL],
-        )
-        EpisodeEditorTextField(
             value = form.durationSeconds,
             onValueChange = { onChange(form.copy(durationSeconds = it)) },
             label = stringResource(R.string.duration),
             issue = errors[EpisodeEditorField.DURATION],
-        )
-        Text(
-            text = stringResource(R.string.media_upload_phase4_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

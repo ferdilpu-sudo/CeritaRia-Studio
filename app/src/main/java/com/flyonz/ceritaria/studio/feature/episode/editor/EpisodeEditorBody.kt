@@ -15,16 +15,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.flyonz.ceritaria.studio.R
+import com.flyonz.ceritaria.studio.feature.media.domain.ImageMediaSlot
+import com.flyonz.ceritaria.studio.feature.media.presentation.ImageMediaUiState
+import com.flyonz.ceritaria.studio.feature.media.presentation.ImageMediaViewModel
 
 @Composable
 fun EpisodeEditorBody(
     state: EpisodeEditorUiState,
     viewModel: EpisodeEditorViewModel,
+    mediaStates: Map<ImageMediaSlot, ImageMediaUiState>,
+    mediaViewModel: ImageMediaViewModel,
 ) {
     when {
         state.isLoading -> CircularProgressIndicator(modifier = Modifier.padding(24.dp))
         state.loadFailed -> LoadFailed(viewModel::retry)
-        else -> EditorForm(state, viewModel)
+        else -> EditorForm(state, viewModel, mediaStates, mediaViewModel)
     }
 }
 
@@ -42,6 +47,8 @@ private fun LoadFailed(onRetry: () -> Unit) {
 private fun EditorForm(
     state: EpisodeEditorUiState,
     viewModel: EpisodeEditorViewModel,
+    mediaStates: Map<ImageMediaSlot, ImageMediaUiState>,
+    mediaViewModel: ImageMediaViewModel,
 ) {
     LazyColumn(
         contentPadding = PaddingValues(20.dp),
@@ -65,6 +72,14 @@ private fun EditorForm(
         }
         item { EpisodeStorySection(state.form, state.validationErrors, viewModel::setForm) }
         item { EpisodeVideoSection(state.form, state.validationErrors, viewModel::setForm) }
+        item {
+            EpisodeArtworkSection(
+                recordId = state.recordId,
+                form = state.form,
+                mediaState = mediaStates[ImageMediaSlot.EPISODE_THUMBNAIL] ?: ImageMediaUiState(),
+                mediaViewModel = mediaViewModel,
+            )
+        }
         item { EpisodePublishingSection(state.form, state.validationErrors, viewModel::setForm) }
         item {
             Button(

@@ -7,6 +7,7 @@ import com.flyonz.ceritaria.studio.core.error.AppError
 import com.flyonz.ceritaria.studio.core.error.AppResult
 import com.flyonz.ceritaria.studio.feature.episode.domain.Episode
 import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeRepository
+import com.flyonz.ceritaria.studio.feature.media.domain.ImageMediaSlot
 import com.flyonz.ceritaria.studio.feature.series.domain.SeriesQuery
 import com.flyonz.ceritaria.studio.feature.series.domain.SeriesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -53,6 +54,17 @@ class EpisodeEditorViewModel @Inject constructor(
     }
 
     fun retry() = load()
+
+    fun applyMediaReference(slot: ImageMediaSlot, publicUrl: String?) {
+        if (slot != ImageMediaSlot.EPISODE_THUMBNAIL) return
+        val value = publicUrl.orEmpty()
+        mutableState.update { current ->
+            current.copy(
+                form = current.form.copy(thumbnailUrl = value),
+                initialForm = current.initialForm.copy(thumbnailUrl = value),
+            )
+        }
+    }
 
     fun save() {
         val current = mutableState.value
@@ -101,6 +113,7 @@ class EpisodeEditorViewModel @Inject constructor(
             mutableState.value = EpisodeEditorUiState(
                 isLoading = false,
                 isEdit = episode != null,
+                recordId = episode?.id,
                 form = form,
                 initialForm = form,
                 seriesOptions = options,
@@ -136,6 +149,8 @@ class EpisodeEditorViewModel @Inject constructor(
         mutableState.update {
             it.copy(
                 isSaving = false,
+                isEdit = true,
+                recordId = episode.id,
                 form = normalized,
                 initialForm = normalized,
             )

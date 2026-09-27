@@ -125,4 +125,16 @@
     <string name="original_episode_number">Nomor saat ini: %1$d</string>
     <string name="move_episode_up">Naikkan %1$s</string>
     <string name="move_episode_down">Turunkan %1$s</string>
+    <string name="artwork">Artwork</string>
+    <string name="cover_image">Cover</string>
+    <string name="hero_image">Hero image</string>
+    <string name="thumbnail_image">Thumbnail</string>
+    <string name="media_save_first">Simpan record terlebih dahulu sebelum mengunggah artwork.</string>
+    <string name="media_upload_progress">Memproses media %1$d%%</string>
+    <string name="media_update_success">Artwork tersimpan.</string>
+    <string name="media_upload_failed">Artwork gagal diproses. Coba lagi.</string>
+    <string name="media_upload_cancelled">Proses artwork dibatalkan.</string>
+    <string name="media_replace">Ganti gambar</string>
+    <string name="media_choose">Pilih gambar</string>
+    <string name="remove">Hapus gambar</string>
 </resources>
