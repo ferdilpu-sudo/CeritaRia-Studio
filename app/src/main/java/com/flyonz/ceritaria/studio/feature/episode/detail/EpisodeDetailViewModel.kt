@@ -7,9 +7,11 @@ import com.flyonz.ceritaria.studio.core.error.AppResult
 import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -22,11 +24,30 @@ class EpisodeDetailViewModel @Inject constructor(
     private val mutableState = MutableStateFlow(EpisodeDetailUiState())
     val state: StateFlow<EpisodeDetailUiState> = mutableState.asStateFlow()
 
+    private val effectChannel = Channel<EpisodeDetailEffect>(Channel.BUFFERED)
+    val effects = effectChannel.receiveAsFlow()
+
     init {
         load()
     }
 
     fun retry() = load()
+
+    fun delete() {
+        if (mutableState.value.isDeleting) return
+        viewModelScope.launch {
+            mutableState.update { it.copy(isDeleting = true, deleteError = false) }
+            when (repository.softDeleteEpisode(episodeId)) {
+                is AppResult.Success -> {
+                    mutableState.update { it.copy(isDeleting = false) }
+                    effectChannel.send(EpisodeDetailEffect.Deleted)
+                }
+                is AppResult.Failure -> mutableState.update {
+                    it.copy(isDeleting = false, deleteError = true)
+                }
+            }
+        }
+    }
 
     private fun load() {
         viewModelScope.launch {

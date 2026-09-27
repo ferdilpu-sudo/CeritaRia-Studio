@@ -96,4 +96,20 @@
     <string name="delete_series_message">Series dan seluruh episodenya akan di-soft-delete dan tidak lagi dipublikasikan.</string>
     <string name="deleting">Menghapus…</string>
     <string name="series_delete_error">Series tidak dapat dihapus.</string>
+    <string name="invalid_series">Pilih series yang valid.</string>
+    <string name="invalid_number">Masukkan angka dalam rentang yang diizinkan.</string>
+    <string name="unsupported_provider">Provider ini tidak dapat ditulis oleh versi Studio saat ini.</string>
+    <string name="invalid_video_url">Gunakan URL video HTTPS yang valid untuk provider terpilih.</string>
+    <string name="select_series">Pilih series</string>
+    <string name="episode_information">Informasi episode</string>
+    <string name="highlights_one_per_line">Highlights (satu per baris)</string>
+    <string name="video">Video</string>
+    <string name="edit_episode">Edit episode</string>
+    <string name="new_episode">Episode baru</string>
+    <string name="episode_editor_load_error">Data episode atau daftar series tidak dapat dimuat untuk diedit.</string>
+    <string name="episode_conflict">Nomor episode atau slug sudah digunakan pada series tersebut.</string>
+    <string name="episode_save_error">Episode tidak dapat disimpan. Periksa koneksi dan coba lagi.</string>
+    <string name="delete_episode_title">Hapus episode?</string>
+    <string name="delete_episode_message">Episode akan di-soft-delete dan tidak lagi dipublikasikan.</string>
+    <string name="episode_delete_error">Episode tidak dapat dihapus.</string>
 </resources>

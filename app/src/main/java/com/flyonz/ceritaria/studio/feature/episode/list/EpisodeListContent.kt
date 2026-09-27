@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -26,6 +25,7 @@ fun EpisodeListContent(
     onStatusChange: (EpisodeStatusFilter) -> Unit,
     onProviderChange: (VideoProviderFilter) -> Unit,
     onEpisodeClick: (String) -> Unit,
+    onCreateEpisode: () -> Unit,
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
 ) {
@@ -39,14 +39,11 @@ fun EpisodeListContent(
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { Text(stringResource(R.string.episodes)) }
         item {
-            OutlinedTextField(
-                value = state.query,
-                onValueChange = onQueryChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.search_episodes)) },
-                singleLine = true,
+            EpisodeListHeader(
+                query = state.query,
+                onQueryChange = onQueryChange,
+                onCreateEpisode = onCreateEpisode,
             )
         }
         item {

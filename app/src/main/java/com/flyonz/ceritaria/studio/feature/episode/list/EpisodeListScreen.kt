@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun EpisodeListScreen(
     contentPadding: PaddingValues,
     onEpisodeClick: (String) -> Unit,
+    onCreateEpisode: (String?) -> Unit,
     viewModel: EpisodeListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -32,6 +33,7 @@ fun EpisodeListScreen(
             onStatusChange = viewModel::setStatus,
             onProviderChange = viewModel::setProvider,
             onEpisodeClick = onEpisodeClick,
+            onCreateEpisode = { onCreateEpisode(state.seriesId) },
             onLoadMore = viewModel::loadMore,
             onRetry = viewModel::refresh,
         )
