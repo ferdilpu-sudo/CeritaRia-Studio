@@ -17,6 +17,9 @@ class AndroidTemporaryMediaStore @Inject constructor(
         return File(directory, "$jobId.mp4")
     }
 
+    override fun hasEncodedOutput(jobId: String): Boolean =
+        encodedOutput(jobId).isFile
+
     override fun hasCapacity(estimatedOutputBytes: Long): Boolean {
         val required = estimatedOutputBytes
             .coerceAtLeast(MINIMUM_ESTIMATE_BYTES)
