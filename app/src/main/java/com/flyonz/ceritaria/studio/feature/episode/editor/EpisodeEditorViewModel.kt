@@ -66,6 +66,24 @@ class EpisodeEditorViewModel @Inject constructor(
         }
     }
 
+    fun applyR2Attachment(assetId: String) {
+        if (assetId.isBlank()) return
+        mutableState.update { current ->
+            current.copy(
+                form = current.form.copy(
+                    videoProvider = "r2",
+                    videoUrl = "",
+                    videoAssetId = assetId,
+                ),
+                initialForm = current.initialForm.copy(
+                    videoProvider = "r2",
+                    videoUrl = "",
+                    videoAssetId = assetId,
+                ),
+            )
+        }
+    }
+
     fun save() {
         val current = mutableState.value
         if (current.isLoading || current.isSaving) return

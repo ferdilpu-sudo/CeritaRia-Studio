@@ -28,6 +28,8 @@ import com.flyonz.ceritaria.studio.R
 import com.flyonz.ceritaria.studio.feature.media.presentation.ImageMediaEffect
 import com.flyonz.ceritaria.studio.feature.media.presentation.ImageMediaViewModel
 import com.flyonz.ceritaria.studio.feature.episode.editor.video.EpisodeLocalVideoViewModel
+import com.flyonz.ceritaria.studio.feature.episode.editor.video.EpisodeVideoAttachmentEffect
+import com.flyonz.ceritaria.studio.feature.episode.editor.video.EpisodeVideoAttachmentViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,10 +40,12 @@ fun EpisodeEditorScreen(
     viewModel: EpisodeEditorViewModel = hiltViewModel(),
     mediaViewModel: ImageMediaViewModel = hiltViewModel(),
     localVideoViewModel: EpisodeLocalVideoViewModel = hiltViewModel(),
+    attachmentViewModel: EpisodeVideoAttachmentViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val mediaState by mediaViewModel.state.collectAsStateWithLifecycle()
     val localVideoState by localVideoViewModel.state.collectAsStateWithLifecycle()
+    val attachmentState by attachmentViewModel.state.collectAsStateWithLifecycle()
     var showDiscardDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
@@ -53,6 +57,13 @@ fun EpisodeEditorScreen(
         mediaViewModel.effects.collect { effect ->
             if (effect is ImageMediaEffect.ReferenceUpdated) {
                 viewModel.applyMediaReference(effect.slot, effect.publicUrl)
+            }
+        }
+    }
+    LaunchedEffect(attachmentViewModel, viewModel) {
+        attachmentViewModel.effects.collect { effect ->
+            if (effect is EpisodeVideoAttachmentEffect.Attached) {
+                viewModel.applyR2Attachment(effect.assetId)
             }
         }
     }
@@ -88,6 +99,8 @@ fun EpisodeEditorScreen(
             mediaViewModel = mediaViewModel,
             localVideoState = localVideoState,
             localVideoViewModel = localVideoViewModel,
+            attachmentState = attachmentState,
+            attachmentViewModel = attachmentViewModel,
         )
     }
 

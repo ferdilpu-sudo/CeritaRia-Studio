@@ -167,4 +167,9 @@
     <string name="video_upload_cancelled_local">Upload dibatalkan. File lokal tetap tersedia.</string>
     <string name="r2_video_attached">Video R2 terpasang</string>
     <string name="r2_video_asset_missing">Asset R2 tidak valid.</string>
+    <string name="attach_video_asset">Pasang video ini ke episode</string>
+    <string name="attaching_video_asset">Memasang asset R2 ke episode…</string>
+    <string name="video_asset_attached_active">Asset R2 ini sudah aktif untuk episode.</string>
+    <string name="video_asset_attach_failed">Gagal memasang asset: %1$s</string>
+    <string name="retry_attach_video_asset">Coba pasang lagi</string>
 </resources>

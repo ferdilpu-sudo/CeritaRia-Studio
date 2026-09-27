@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -63,6 +64,27 @@ class EpisodeEditorViewModelTest {
         assertEquals(1, episodeRepository.saveCalls)
         assertFalse(viewModel.state.value.isDirty)
     }
+
+    @Test
+    fun r2AttachmentSyncsPersistedMediaButPreservesOtherDirtyEdits() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val viewModel = EpisodeEditorViewModel(
+                SavedStateHandle(mapOf("seriesId" to REQUIRED_SERIES_ID)),
+                FakeEpisodeRepository(),
+                FakeSeriesRepository(base = listOf(series(REQUIRED_SERIES_ID))),
+            )
+            advanceUntilIdle()
+            viewModel.setForm(validForm().copy(title = "Judul belum disimpan"))
+
+            viewModel.applyR2Attachment("asset-1")
+
+            val state = viewModel.state.value
+            assertEquals("r2", state.form.videoProvider)
+            assertEquals("asset-1", state.form.videoAssetId)
+            assertEquals("r2", state.initialForm.videoProvider)
+            assertEquals("asset-1", state.initialForm.videoAssetId)
+            assertTrue(state.isDirty)
+        }
 
     @Test
     fun conflictMapsToEditorError() = runTest(mainDispatcherRule.testDispatcher) {

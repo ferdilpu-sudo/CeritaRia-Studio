@@ -28,6 +28,9 @@ fun EpisodeLocalVideoSection(
     onCancel: () -> Unit,
     onUpload: () -> Unit,
     onCancelUpload: () -> Unit,
+    attachedAssetId: String?,
+    attachmentState: EpisodeVideoAttachmentUiState,
+    onAttach: (String) -> Unit,
 ) {
     val picker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -110,6 +113,15 @@ fun EpisodeLocalVideoSection(
                     ),
                 )
             }
+        }
+
+        if (state.status == EpisodeLocalVideoStatus.UPLOAD_READY) {
+            EpisodeVideoAttachmentControls(
+                remoteAssetId = state.job?.remoteAssetId,
+                attachedAssetId = attachedAssetId,
+                state = attachmentState,
+                onAttach = onAttach,
+            )
         }
 
         if (state.status == EpisodeLocalVideoStatus.UPLOAD_QUEUED ||

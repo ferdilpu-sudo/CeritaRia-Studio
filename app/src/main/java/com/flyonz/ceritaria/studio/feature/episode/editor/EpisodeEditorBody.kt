@@ -21,6 +21,8 @@ import com.flyonz.ceritaria.studio.feature.media.presentation.ImageMediaViewMode
 import com.flyonz.ceritaria.studio.feature.episode.editor.video.EpisodeLocalVideoSection
 import com.flyonz.ceritaria.studio.feature.episode.editor.video.EpisodeLocalVideoUiState
 import com.flyonz.ceritaria.studio.feature.episode.editor.video.EpisodeLocalVideoViewModel
+import com.flyonz.ceritaria.studio.feature.episode.editor.video.EpisodeVideoAttachmentUiState
+import com.flyonz.ceritaria.studio.feature.episode.editor.video.EpisodeVideoAttachmentViewModel
 
 @Composable
 fun EpisodeEditorBody(
@@ -30,6 +32,8 @@ fun EpisodeEditorBody(
     mediaViewModel: ImageMediaViewModel,
     localVideoState: EpisodeLocalVideoUiState,
     localVideoViewModel: EpisodeLocalVideoViewModel,
+    attachmentState: EpisodeVideoAttachmentUiState,
+    attachmentViewModel: EpisodeVideoAttachmentViewModel,
 ) {
     when {
         state.isLoading -> CircularProgressIndicator(modifier = Modifier.padding(24.dp))
@@ -41,6 +45,8 @@ fun EpisodeEditorBody(
             mediaViewModel,
             localVideoState,
             localVideoViewModel,
+            attachmentState,
+            attachmentViewModel,
         )
     }
 }
@@ -63,6 +69,8 @@ private fun EditorForm(
     mediaViewModel: ImageMediaViewModel,
     localVideoState: EpisodeLocalVideoUiState,
     localVideoViewModel: EpisodeLocalVideoViewModel,
+    attachmentState: EpisodeVideoAttachmentUiState,
+    attachmentViewModel: EpisodeVideoAttachmentViewModel,
 ) {
     LazyColumn(
         contentPadding = PaddingValues(20.dp),
@@ -94,6 +102,9 @@ private fun EditorForm(
                 onCancel = localVideoViewModel::cancelEncoding,
                 onUpload = localVideoViewModel::uploadVideo,
                 onCancelUpload = localVideoViewModel::cancelUpload,
+                attachedAssetId = state.form.videoAssetId,
+                attachmentState = attachmentState,
+                onAttach = attachmentViewModel::attach,
             )
         }
         item {
