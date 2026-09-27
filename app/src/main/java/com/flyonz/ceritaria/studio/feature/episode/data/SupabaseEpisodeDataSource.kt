@@ -4,18 +4,20 @@ import com.flyonz.ceritaria.studio.core.network.SupabaseClientProvider
 import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeQuery
 import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeStatusFilter
 import com.flyonz.ceritaria.studio.feature.episode.domain.VideoProviderFilter
+import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder
+import java.time.Instant
 import javax.inject.Inject
 
 class SupabaseEpisodeDataSource @Inject constructor(
     private val clientProvider: SupabaseClientProvider,
 ) : EpisodeDataSource {
     override suspend fun fetchEpisodes(query: EpisodeQuery): List<EpisodeRowDto> {
-        val client = requireNotNull(clientProvider.clientOrNull) { "Supabase is not configured." }
+        val client = requireClient()
         val start = query.page.toLong() * query.pageSize
         val end = start + query.pageSize
 
@@ -38,15 +40,47 @@ class SupabaseEpisodeDataSource @Inject constructor(
         }.decodeList<EpisodeRowDto>()
     }
 
-    override suspend fun fetchEpisodeById(id: String): EpisodeRowDto? {
-        val client = requireNotNull(clientProvider.clientOrNull) { "Supabase is not configured." }
-        return client.from("episodes").select(columns = EPISODE_COLUMNS) {
+    override suspend fun fetchEpisodeById(id: String): EpisodeRowDto? =
+        requireClient().from("episodes").select(columns = EPISODE_COLUMNS) {
             filter {
                 eq("id", id)
                 exact("deleted_at", null)
             }
             limit(1)
         }.decodeList<EpisodeRowDto>().firstOrNull()
+
+    override suspend fun createEpisode(payload: EpisodeWriteDto): EpisodeRowDto =
+        mapConflict {
+            requireClient().from("episodes").insert(payload) {
+                select()
+            }.decodeSingle<EpisodeRowDto>()
+        }
+
+    override suspend fun updateEpisode(payload: EpisodeWriteDto): EpisodeRowDto =
+        mapConflict {
+            requireClient().from("episodes").update(payload) {
+                select()
+                filter { eq("id", payload.id) }
+            }.decodeSingle<EpisodeRowDto>()
+        }
+
+    override suspend fun softDeleteEpisode(id: String) {
+        requireClient().from("episodes").update(
+            EpisodeDeleteDto(deletedAt = Instant.now().toString()),
+        ) {
+            filter { eq("id", id) }
+        }
+    }
+
+    private fun requireClient() = requireNotNull(clientProvider.clientOrNull) {
+        "Supabase is not configured."
+    }
+
+    private suspend fun <T> mapConflict(block: suspend () -> T): T = try {
+        block()
+    } catch (error: PostgrestRestException) {
+        if (error.code == UNIQUE_VIOLATION) throw EpisodeConflictException()
+        throw error
     }
 
     private fun PostgrestFilterBuilder.applyStatus(status: EpisodeStatusFilter) {
@@ -73,6 +107,7 @@ class SupabaseEpisodeDataSource @Inject constructor(
     }
 
     private companion object {
+        const val UNIQUE_VIOLATION = "23505"
         val EPISODE_COLUMNS = Columns.raw(
             """
             id,series_id,episode_number,slug,title,short_synopsis,recap,highlights,

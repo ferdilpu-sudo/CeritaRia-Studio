@@ -7,6 +7,7 @@ import com.flyonz.ceritaria.studio.core.model.PagedResult
 import com.flyonz.ceritaria.studio.feature.episode.domain.Episode
 import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeQuery
 import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeRepository
+import com.flyonz.ceritaria.studio.feature.episode.domain.EpisodeSaveCommand
 import com.flyonz.ceritaria.studio.feature.episode.domain.VideoProviderFilter
 import com.flyonz.ceritaria.studio.feature.series.domain.Series
 import com.flyonz.ceritaria.studio.feature.series.domain.SeriesQuery
@@ -66,6 +67,12 @@ class EpisodeListViewModelTest {
 
         override suspend fun getEpisodeById(id: String): AppResult<Episode?> =
             AppResult.Success(null)
+
+        override suspend fun saveEpisode(command: EpisodeSaveCommand): AppResult<Episode> =
+            AppResult.Failure(AppError.Unknown)
+
+        override suspend fun softDeleteEpisode(id: String): AppResult<Unit> =
+            AppResult.Failure(AppError.Unknown)
     }
 
     private class EmptySeriesRepository : SeriesRepository {
