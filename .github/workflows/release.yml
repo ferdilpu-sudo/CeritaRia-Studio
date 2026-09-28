@@ -78,11 +78,45 @@ jobs:
             echo "::error::Missing CERITARIA_ANDROID_KEYSTORE_BASE64 secret"
             exit 1
           fi
+          if ! [[ "$CERITARIA_VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::version_code must be a positive integer"
+            exit 1
+          fi
+          if [ -z "$CERITARIA_VERSION_NAME" ]; then
+            echo "::error::version_name must not be empty"
+            exit 1
+          fi
+          case "$CERITARIA_SUPABASE_URL" in
+            https://*) ;;
+            *) echo "::error::CERITARIA_SUPABASE_URL must use https://"; exit 1 ;;
+          esac
+          case "$CERITARIA_API_BASE_URL" in
+            https://*) ;;
+            *) echo "::error::CERITARIA_API_BASE_URL must use https://"; exit 1 ;;
+          esac
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/ceritaria-release.jks"
           echo "CERITARIA_SIGNING_STORE_FILE=$RUNNER_TEMP/ceritaria-release.jks" >> "$GITHUB_ENV"
 
       - name: Verify and build signed candidate
         run: gradle lintDebug testDebugUnitTest assembleRelease bundleRelease --stacktrace
+
+      - name: Verify release signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/release/app-release.apk"
+          AAB="app/build/outputs/bundle/release/app-release.aab"
+          APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          jarsigner -verify -strict "$AAB"
+
+      - name: Generate release checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd app/build/outputs
+          sha256sum             apk/release/app-release.apk             bundle/release/app-release.aab             > SHA256SUMS.txt
+          cat SHA256SUMS.txt
 
       - name: Upload signed APK and AAB
         uses: actions/upload-artifact@v7
@@ -91,5 +125,6 @@ jobs:
           path: |
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/bundle/release/app-release.aab
+            app/build/outputs/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
