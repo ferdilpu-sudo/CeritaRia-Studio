@@ -1103,8 +1103,9 @@ Aligned:
 
 Aligned:
 
-- direct-upload video is part of the core delivery baseline;
-- R2 asset representation remains migration-gated until Phase 0 verifies production;
+- direct-upload video is part of the implemented delivery baseline;
+- R2 migrations 006–010 and their server/API contract are recorded as VERIFIED-MIGRATION;
+- live production application of those migrations remains an explicit environment smoke gate;
 - local `VideoJob` includes upload-session and multipart/recovery state;
 - trusted server upload-session responsibilities are documented;
 - transient Android operational state remains outside production `episodes`.
@@ -1130,23 +1131,21 @@ These documents now form one specification set and should be changed together wh
 
 ---
 
-## 14. Post–Phase 0 Open Decisions
+## 14. Remaining Release-Era Decisions
 
-Phase 0 resolved the production schema, publish model, RLS/admin model, image storage convention, analytics contract, and current media-provider constraints.
+The implementation phases resolved the original R2 architecture questions: delivery/player strategy, `video_assets` schema, server endpoint contract, upload policy, multipart behavior, and episode attachment are now represented by backend migrations/code and Android integrations.
 
-The remaining decisions belong to later implementation phases:
+Remaining decisions are operational or post-initial-release work rather than blockers for the implemented architecture:
 
-1. final R2 video delivery/player URL strategy;
-2. final `video_assets` migration design;
-3. exact R2 server endpoint names and response envelope;
-4. maximum accepted direct-upload video size;
-5. multipart threshold and part-size policy;
-6. production application and smoke verification for reorder migration `005_episode_reorder_rpc.sql`;
-7. whether a restore workflow should be added later;
-8. staging/test backend availability;
-9. minimum/target Android SDK and device support matrix.
+1. confirm which Supabase migrations 005–010 have been applied to each real environment;
+2. decide whether to maintain a dedicated staging backend for destructive/media smoke tests;
+3. decide whether a retained-R2-asset restore workflow is required for instant R2-to-R2 rollback;
+4. run and record the representative Android hardware/device support matrix;
+5. decide when to enable R8/minification and run the dedicated shrinker compatibility gate;
+6. decide the broader distribution channel after the signed internal candidate passes smoke;
+7. decide whether the unsupported soft-delete Restore workflow should be added in a later product phase.
 
-These are not blockers for Phase 1 foundation or Phase 2 read-only catalog. They must not be guessed when their owning phase begins.
+These items must remain explicit. They must not be silently inferred from successful unit/CI builds.
 
 ---
 
