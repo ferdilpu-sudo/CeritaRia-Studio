@@ -851,7 +851,9 @@ Production completion remains pending a configured admin smoke test against the 
 
 ---
 
-## Phase 9 — Testing & Hardening 🟡 AUTOMATED HARDENING IMPLEMENTED / FINAL HEAD CI PENDING
+## Phase 9 — Testing & Hardening ✅ AUTOMATED CODE / CI PASS
+
+The final hardened Android head passed GitHub Actions run `36364998006` on **2026-09-28** after release-workflow hardening was added.
 
 ### Automated coverage and hardening completed
 
@@ -860,20 +862,19 @@ Production completion remains pending a configured admin smoke test against the 
 - [x] handwritten Kotlin line guardrails enforced in CI;
 - [x] privileged server credential identifiers rejected from Android source;
 - [x] potential sensitive token/password logging and JWT-like literals rejected in CI;
-- [x] Room schema generation moved to the official Room Gradle Plugin so debug/release KSP schema work has reproducible variant-aware inputs/outputs;
-- [x] CI actions upgraded to supported Node 24-based releases;
+- [x] Room schema generation uses the official Room Gradle Plugin with reproducible variant-aware outputs;
+- [x] CI actions use supported Node 24-based releases;
 - [x] superseded Android workflow runs cancel through workflow concurrency;
 - [x] upload recovery preserves UNAUTHENTICATED/FORBIDDEN/server failures instead of silently replacing the remote session;
-- [x] upload-session cleanup is truly best-effort while preserving coroutine cancellation;
-- [x] WorkManager and Android 14+ UIDT paths share the same retry classification;
+- [x] WorkManager and Android 14+ UIDT paths share retry classification;
 - [x] unrecoverable auth/config/source errors stop automatic retry;
 - [x] transient network/R2/server/session errors remain retryable;
-- [x] missing/unavailable local video sources map to SOURCE_NOT_READY;
-- [x] failed finalize and multipart transfer retain the prepared local video for retry;
+- [x] failed finalize and multipart transfer retain prepared local video for retry;
 - [x] completed multipart parts remain persisted after a later part fails;
 - [x] duplicate login, attach, preview, Series save, Episode save, and reorder actions are blocked synchronously;
 - [x] cancellation semantics remain explicit across image, encode, upload recovery, Worker, and UIDT execution;
-- [x] previous valid production media remains untouched until replacement/finalization succeeds.
+- [x] previous valid production media remains untouched until replacement/finalization succeeds;
+- [x] final hardened head passed `lintDebug testDebugUnitTest assembleDebug assembleRelease` plus source/security guardrails.
 
 ### Still requires environment/device verification
 
@@ -888,28 +889,60 @@ Production completion remains pending a configured admin smoke test against the 
 
 ### Exit gate
 
-Automated code/build hardening is considered complete only after the latest Phase 9 head passes the full Android CI workflow. Environment-specific and real-device items remain explicit release-candidate gates and must not be claimed from unit CI.
+Automated code/build hardening: **PASS**.
+
+Environment-specific and real-device items remain explicit Phase 10 release-candidate gates and are not claimed from unit CI.
 
 ---
 
-## Phase 10 — Release
+## Phase 10 — Release 🟡 AUTOMATED RELEASE PACKAGING READY / MANUAL CANDIDATE PENDING
 
-### Tasks
+Release engineering is implemented for an internal signed candidate, while production/device smoke remains intentionally manual.
 
-- release signing configuration;
-- minification/shrinker verification where enabled;
-- final environment review;
-- final schema compatibility check;
-- final RLS/security review;
-- APK/AAB internal distribution;
-- production smoke test with non-destructive operations first;
-- controlled mutation test;
-- controlled media upload test;
-- rollback procedure documented.
+### Automated release preparation
+
+- [x] release signing configuration reads keystore/password/alias values only from Gradle properties or environment variables;
+- [x] signing secrets are required by the manual `Android Release Candidate` workflow;
+- [x] Supabase URL, publishable key, and API base URL are supplied at build time rather than committed;
+- [x] privileged Supabase service-role and R2 credentials remain forbidden from Android source/workflows;
+- [x] release workflow validates a positive integer `version_code` and non-empty `version_name`;
+- [x] release Supabase/API endpoints must use HTTPS;
+- [x] release workflow runs source/security guardrails, lint, unit tests, APK build, and AAB build;
+- [x] APK signature is verified with `apksigner`;
+- [x] AAB JAR signature is verified with `jarsigner -strict`;
+- [x] SHA-256 checksums are generated for APK/AAB and uploaded with the artifacts;
+- [x] APK + AAB + checksum artifact retention is 30 days;
+- [x] workflow token permissions are restricted to `contents: read`;
+- [x] rollback and controlled-smoke order are documented in `RELEASE-OPERATIONS.md`;
+- [x] backend contract currently exposes migrations through `010_episode_r2_video.sql` and the required R2 upload/preview/attach routes;
+- [x] Ceritaria backend latest audited head is CI green;
+- [x] Android release-workflow hardening head passed normal Android CI run `36364998006`;
+- [x] minification is intentionally disabled for the first internal candidate and therefore has no shrinker gate yet.
+
+### Manual release-candidate gates
+
+- [ ] configure GitHub release secrets;
+- [ ] manually run `Android Release Candidate` with a new monotonically increasing versionCode;
+- [ ] install the signed APK on representative Android hardware;
+- [ ] verify login/session/admin authorization against the real environment;
+- [ ] verify read-only Series/Episode/Analytics;
+- [ ] perform one controlled draft mutation;
+- [ ] perform controlled image upload/replace/remove;
+- [ ] inspect/encode representative local video on hardware;
+- [ ] verify real R2 single and multipart upload, retry, interruption, preview, and finalize;
+- [ ] attach a READY R2 asset only after preview succeeds;
+- [ ] verify the same controlled content in the existing Ceritaria web/PWA;
+- [ ] verify unauthorized/non-admin operations remain rejected;
+- [ ] complete accessibility/focus/touch-target manual pass;
+- [ ] retain the previous known-good source/artifact before broader distribution.
 
 ### Exit gate
 
-Internal production candidate can manage Ceritaria content without breaking existing web/PWA behavior and without privileged credentials being recoverable from the Android package.
+Automated release engineering: **PASS**.
+
+Production/internal candidate: **PENDING MANUAL SIGNED WORKFLOW + ENVIRONMENT/DEVICE SMOKE**.
+
+The app must not be described as production-verified until the signed candidate completes the release checklist against the real environment.
 
 ---
 

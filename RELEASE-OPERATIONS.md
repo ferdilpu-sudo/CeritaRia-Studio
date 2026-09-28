@@ -18,9 +18,11 @@ Never add a Supabase service-role key, R2 access key, or R2 secret key to the An
 
 Run **Android Release Candidate** manually with a monotonically increasing `version_code` and the desired `version_name`.
 
-The release workflow runs the same source/security guardrails, validates required environment, decodes the signing keystore only into the temporary runner directory, runs lint/unit tests, builds signed APK/AAB, and uploads both as a GitHub Actions artifact for 30 days.
+The release workflow runs the same source/security guardrails, validates required environment/version inputs, requires HTTPS production endpoints, decodes the signing keystore only into the temporary runner directory, runs lint/unit tests, builds signed APK/AAB, verifies the APK/AAB signatures, generates SHA-256 checksums, and uploads APK + AAB + checksum as a GitHub Actions artifact for 30 days.
 
 Minification is intentionally disabled for the first internal candidate. Enable it only after a separate shrinker compatibility pass.
+
+After downloading the artifact, compare the packaged files against `SHA256SUMS.txt` before distribution. Keep the checksum together with the candidate record.
 
 ## Smoke order
 

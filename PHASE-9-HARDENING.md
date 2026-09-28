@@ -1,7 +1,8 @@
 # Phase 9 — Testing & Hardening
 
-Status: **AUTOMATED HARDENING IMPLEMENTED; FINAL HEAD CI PENDING**  
-Date: **2026-09-27**
+Status: **AUTOMATED CODE / CI PASS; ENVIRONMENT/DEVICE GATES PENDING**  
+Date: **2026-09-28**  
+Final hardened verification: **GitHub Actions 36364998006**
 
 ## What was hardened
 
@@ -74,3 +75,17 @@ The following still need release-candidate environment/device checks:
 - controlled web/PWA compatibility after production mutation.
 
 These remain release gates rather than being silently declared complete from mocks.
+
+## Final automated result
+
+The hardened head, including the release-workflow permission/signature/checksum changes, passed the normal Android CI workflow in run `36364998006`:
+
+```text
+source/security guardrails
+lintDebug
+testDebugUnitTest
+assembleDebug
+assembleRelease
+```
+
+Phase 9 automated code/build hardening is therefore complete. The remaining list above moves forward as Phase 10 release-candidate smoke work.
